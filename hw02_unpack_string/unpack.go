@@ -42,13 +42,18 @@ func Unpack(str string) (string, error) {
 		}
 
 		var nextRune, inOneRune rune
+		_, currentRuneSize := utf8.DecodeRuneInString(string(r))
 
-		if len(str)-1 >= i+1 {
-			nextRune, _ = utf8.DecodeRuneInString(string(str[i+1]))
+		if len(str)-1 >= i+currentRuneSize {
+			char := str[i+currentRuneSize : i+currentRuneSize+1]
+			nextRune, _ = utf8.DecodeRuneInString(char)
 		}
 
-		if len(str)-1 >= i+2 {
-			inOneRune, _ = utf8.DecodeRuneInString(string(str[i+2]))
+		_, nextRuneSize := utf8.DecodeRuneInString(string(nextRune))
+
+		if len(str)-1 >= i+currentRuneSize+nextRuneSize {
+			char := str[i+currentRuneSize+nextRuneSize : i+currentRuneSize+nextRuneSize+1]
+			inOneRune, _ = utf8.DecodeRuneInString(char)
 		}
 
 		_, validatingError := validateRunes(i, r, nextRune, inOneRune)
