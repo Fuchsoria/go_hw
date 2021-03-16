@@ -10,7 +10,6 @@ import (
 
 var (
 	ErrInvalidString      = errors.New("invalid string")
-	zeroRune         rune = 48
 	reverseSlash     rune = 92
 )
 
