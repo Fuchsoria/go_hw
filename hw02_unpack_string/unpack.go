@@ -45,27 +45,15 @@ func Unpack(str string) (string, error) {
 		isLastIteration := len(str) == i+utf8.RuneLen(r)
 
 		switch {
-		case r == zeroRune:
-		case unicode.IsDigit(r) && prevRune == reverseSlash && isPrevRuneEscaped:
+		case !isPrevRuneEscaped && prevRune == reverseSlash:
+			isPrevRuneEscaped = true
+
+			result.WriteRune(r)
+		case unicode.IsDigit(r) && isPrevRuneEscaped:
 			isPrevRuneEscaped = false
 			digit, _ := strconv.Atoi(string(r))
 
 			result.WriteString(strings.Repeat(string(prevRune), digit-1))
-		case r == reverseSlash && isPrevRuneEscaped:
-			isPrevRuneEscaped = false
-		case unicode.IsDigit(r) && unicode.IsDigit(prevRune) && isPrevRuneEscaped:
-			isPrevRuneEscaped = false
-			digit, _ := strconv.Atoi(string(r))
-
-			result.WriteString(strings.Repeat(string(prevRune), digit-1))
-		case r == reverseSlash && prevRune == reverseSlash:
-			isPrevRuneEscaped = true
-
-			result.WriteRune(r)
-		case unicode.IsDigit(r) && prevRune == reverseSlash:
-			isPrevRuneEscaped = true
-
-			result.WriteRune(r)
 		case unicode.IsDigit(r) && unicode.IsLetter(prevRune):
 			isPrevRuneEscaped = false
 			digit, _ := strconv.Atoi(string(r))
@@ -80,6 +68,8 @@ func Unpack(str string) (string, error) {
 			isPrevRuneEscaped = false
 
 			result.WriteRune(prevRune)
+		default:
+			isPrevRuneEscaped = false
 		}
 
 		prevRune = r
