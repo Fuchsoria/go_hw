@@ -1,5 +1,14 @@
 package hw04lrucache
 
+// import (
+// 	"math/rand"
+// 	"strconv"
+// 	"sync"
+// 	"testing"
+
+// 	"github.com/stretchr/testify/require"
+// )
+
 // func TestCache(t *testing.T) {
 // 	t.Run("empty cache", func(t *testing.T) {
 // 		c := NewCache(10)
