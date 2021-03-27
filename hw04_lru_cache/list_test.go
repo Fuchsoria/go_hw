@@ -7,6 +7,46 @@ import (
 )
 
 func TestList(t *testing.T) {
+	t.Run("Normal and Reverse", func(t *testing.T) {
+		l := NewList()
+
+		toRemove := l.PushFront(10)
+		l.PushFront(20)
+		l.PushBack("a")
+		l.PushBack("b")
+
+		l.Remove(toRemove)
+
+		var prevItem *ListItem = l.Front()
+		var nextItem *ListItem = l.Back()
+		items := []interface{}{prevItem.Value}
+		itemsReverse := []interface{}{nextItem.Value}
+
+		for {
+			if item := prevItem.Next; item != nil {
+				prevItem = item
+
+				items = append(items, item.Value)
+			} else {
+				break
+			}
+		}
+
+		for {
+			if item := nextItem.Prev; item != nil {
+				nextItem = item
+
+				itemsReverse = append(itemsReverse, item.Value)
+			} else {
+				break
+			}
+		}
+
+		require.Equal(t, []interface{}{20, "a", "b"}, items)
+		require.Equal(t, []interface{}{"b", "a", 20}, itemsReverse)
+		require.Equal(t, 3, l.Len())
+	})
+
 	t.Run("empty list", func(t *testing.T) {
 		l := NewList()
 
