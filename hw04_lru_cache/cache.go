@@ -21,6 +21,8 @@ type lruCache struct {
 
 func (c *lruCache) Set(key Key, value interface{}) bool {
 	c.Lock()
+	defer c.Unlock()
+
 	var alreadyExist bool
 
 	if prevValue, ok := c.items[key]; ok {
@@ -34,21 +36,17 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 	}
 
 	c.items[key] = c.queue.PushFront(value)
-	c.Unlock()
 
 	return alreadyExist
 }
 
 func (c *lruCache) Get(key Key) (interface{}, bool) {
 	c.Lock()
+	defer c.Unlock()
 
 	if item, ok := c.items[key]; ok {
-		c.Unlock()
-
 		return item.Value, true
 	}
-
-	c.Unlock()
 
 	return nil, false
 }
