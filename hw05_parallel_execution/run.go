@@ -2,7 +2,6 @@ package hw05parallelexecution
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 )
 
@@ -58,7 +57,6 @@ func Run(tasks []Task, n, m int) error {
 	case <-limit:
 		return ErrErrorsLimitExceeded
 	default:
-		fmt.Println("DEFAULT WTF")
 		return nil
 	}
 }
