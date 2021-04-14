@@ -24,7 +24,7 @@ func watcher(tasks chan Task, errorsCount *int64, limit chan struct{}, killsigna
 			}
 			wg.Done()
 
-			if errors := int(*errorsCount); errors >= maxErrors {
+			if errors := atomic.LoadInt64(errorsCount); errors >= int64(maxErrors) {
 				closeSignal()
 				closeLimit()
 
