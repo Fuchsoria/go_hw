@@ -26,18 +26,13 @@ func Run(tasks []Task, n, m int) error {
 
 	for i := 0; i < n; i++ {
 		go func() {
-			for {
-				select {
-				case v, ok := <-tasksCh:
-					if !ok {
-						wg.Done()
-
-						return
-					}
-
-					v()
-				}
+			for v := range tasksCh {
+				v()
 			}
+
+			wg.Done()
+
+			return
 		}()
 	}
 
