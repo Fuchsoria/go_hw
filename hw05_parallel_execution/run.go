@@ -15,11 +15,9 @@ func Run(tasks []Task, n, m int) error {
 	tasksCh := make(chan Task)
 
 	go func() {
-		for i, task := range tasks {
-			if i == len(tasks)-1 {
-				defer close(tasksCh)
-			}
+		defer close(tasksCh)
 
+		for _, task := range tasks {
 			tasksCh <- task
 		}
 	}()
