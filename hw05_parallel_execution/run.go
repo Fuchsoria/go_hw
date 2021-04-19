@@ -14,14 +14,6 @@ func Run(tasks []Task, n, m int) error {
 	wg := sync.WaitGroup{}
 	tasksCh := make(chan Task)
 
-	go func() {
-		defer close(tasksCh)
-
-		for _, task := range tasks {
-			tasksCh <- task
-		}
-	}()
-
 	wg.Add(n)
 
 	for i := 0; i < n; i++ {
@@ -35,6 +27,12 @@ func Run(tasks []Task, n, m int) error {
 			return
 		}()
 	}
+
+	for _, task := range tasks {
+		tasksCh <- task
+	}
+
+	close(tasksCh)
 
 	wg.Wait()
 
