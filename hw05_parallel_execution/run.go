@@ -10,69 +10,79 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-func watcher(tasks chan Task, errorsCount *int64, limit chan struct{}, killsignal chan struct{}, maxErrors int, wg *sync.WaitGroup, once *sync.Once, once2 *sync.Once) {
-	closeSignal := func() { once.Do(func() { close(killsignal) }) }
-	closeLimit := func() { once2.Do(func() { close(limit) }) }
+func creator(tasks []Task, killSignal <-chan struct{}) <-chan Task {
+	results := make(chan Task)
 
-	for {
-		select {
-		case task := <-tasks:
-			wg.Add(1)
-			err := task()
-			if err != nil {
-				atomic.AddInt64(errorsCount, 1)
+	go func() {
+		defer close(results)
+
+		for _, task := range tasks {
+			select {
+			case <-killSignal:
+				break
+			case results <- task:
 			}
-			wg.Done()
-
-			if errors := atomic.LoadInt64(errorsCount); errors >= int64(maxErrors) {
-				closeSignal()
-				closeLimit()
-
-				return
-			}
-
-			if len(tasks) == 0 {
-				closeSignal()
-
-				return
-			}
-
-		case <-killsignal:
-			return
 		}
-	}
+	}()
+
+	return results
 }
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	ch := make(chan Task, len(tasks))
-	killsignal := make(chan struct{})
+	var errorsCount int64 = 0
+	killSignal := make(chan struct{})
+	done := make(chan struct{})
 	limit := make(chan struct{})
-
-	var errorsCount int64
-
 	once := sync.Once{}
-	once2 := sync.Once{}
+	onceLimit := sync.Once{}
 	wg := sync.WaitGroup{}
 
-	defer close(ch)
+	defer close(killSignal)
+
+	worker := func(results <-chan Task) {
+		defer wg.Done()
+
+		for {
+			select {
+			case result, ok := <-results:
+				if !ok {
+					once.Do(func() {
+						close(done)
+					})
+					return
+				}
+				if err := result(); err != nil {
+					atomic.AddInt64(&errorsCount, 1)
+				}
+				if atomic.LoadInt64(&errorsCount) >= int64(m) {
+					onceLimit.Do((func() {
+						close(limit)
+					}))
+					return
+				}
+			case <-killSignal:
+				return
+			}
+		}
+	}
+
+	tasksCh := creator(tasks, killSignal)
 
 	for i := 0; i < n; i++ {
-		go watcher(ch, &errorsCount, limit, killsignal, m, &wg, &once, &once2)
-	}
+		wg.Add(1)
 
-	for _, t := range tasks {
-		ch <- t
+		go worker(tasksCh)
 	}
-
-	<-killsignal
 
 	wg.Wait()
 
-	select {
-	case <-limit:
-		return ErrErrorsLimitExceeded
-	default:
-		return nil
+	for {
+		select {
+		case <-done:
+			return nil
+		case <-limit:
+			return ErrErrorsLimitExceeded
+		}
 	}
 }
