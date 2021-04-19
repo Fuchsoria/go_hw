@@ -23,8 +23,6 @@ func Run(tasks []Task, n, m int) error {
 			}
 
 			wg.Done()
-
-			return
 		}()
 	}
 
