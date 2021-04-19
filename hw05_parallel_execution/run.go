@@ -77,12 +77,10 @@ func Run(tasks []Task, n, m int) error {
 
 	wg.Wait()
 
-	for {
-		select {
-		case <-done:
-			return nil
-		case <-limit:
-			return ErrErrorsLimitExceeded
-		}
+	select {
+	case <-done:
+		return nil
+	case <-limit:
+		return ErrErrorsLimitExceeded
 	}
 }
