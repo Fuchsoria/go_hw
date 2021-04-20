@@ -6,7 +6,11 @@ import (
 	"sync/atomic"
 )
 
-var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+var (
+	ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+	ErrNoWorkers           = errors.New("no workers found")
+	ErrMaxErrorsIsNotValid = errors.New("max errors number is too small")
+)
 
 type Task func() error
 
@@ -16,6 +20,18 @@ func Run(tasks []Task, n, m int) error {
 	tasksCh := make(chan Task)
 	var errors int64
 	var err error
+
+	if n <= 0 {
+		err = ErrNoWorkers
+
+		return err
+	}
+
+	if m <= 0 {
+		err = ErrMaxErrorsIsNotValid
+
+		return err
+	}
 
 	wg.Add(n)
 
@@ -50,9 +66,5 @@ func Run(tasks []Task, n, m int) error {
 
 	wg.Wait()
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

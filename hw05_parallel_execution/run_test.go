@@ -68,83 +68,94 @@ func TestRun(t *testing.T) {
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
 
-	t.Run("mixed random tasks", func(t *testing.T) {
-		tasks := []Task{}
-		maxTasks := 100
-		workersCount := 10
-		maxErrorsCount := 50
-		var doneTasks int64
-		var totalDoneTasks int64
-		var errorTasks int64
-		var totalErrorTasks int64
-
-		randBool := func() bool {
-			rand.Seed(time.Now().UnixNano())
-			return rand.Intn(2) == 1
-		}
-
-		for i := 0; i < maxTasks; i++ {
-			if shouldDone := randBool(); shouldDone {
-				atomic.AddInt64(&totalDoneTasks, 1)
-
-				tasks = append(tasks, func() error {
-					atomic.AddInt64(&doneTasks, 1)
-
-					return nil
-				})
-			} else {
-				atomic.AddInt64(&totalErrorTasks, 1)
-
-				tasks = append(tasks, func() error {
-					atomic.AddInt64(&errorTasks, 1)
-
-					return fmt.Errorf("error from task %d", i)
-				})
-			}
-		}
-
-		err := Run(tasks, workersCount, maxErrorsCount)
-
-		if totalErrorTasks >= int64(maxErrorsCount) {
-			fmt.Println(maxErrorsCount, totalErrorTasks, errorTasks, err)
-			require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
-			require.True(t, int64(maxErrorsCount) <= errorTasks, "not all errors tasks are done")
-			require.True(t, errorTasks <= int64(maxErrorsCount+workersCount), "not all errors tasks are done")
-		} else {
-			require.NoError(t, err)
-			require.Equal(t, totalDoneTasks, doneTasks, "not all positive tasks are done")
-		}
-	})
-
 	t.Run("Run with nil values", func(t *testing.T) {
 		tasks := []Task{}
 		maxTasks := 50
 		workersCount := 10
 		maxErrorsCount := 1
+		var nonNilTasks int64
 		var doneTasks int64
-		var totalNilTasks int64
 
 		randBool := func() bool {
-			rand.Seed(time.Now().UnixNano())
 			return rand.Intn(2) == 1
 		}
 
 		for i := 0; i < maxTasks; i++ {
-			if shouldDone := randBool(); shouldDone {
+			if nonNil := randBool(); nonNil {
+				nonNilTasks++
+
 				tasks = append(tasks, func() error {
 					atomic.AddInt64(&doneTasks, 1)
 
 					return nil
 				})
 			} else {
-				atomic.AddInt64(&totalNilTasks, 1)
-
 				tasks = append(tasks, nil)
 			}
 		}
 
 		err := Run(tasks, workersCount, maxErrorsCount)
 		require.NoError(t, err, "slice with nil values shouldn't have errors, just ignore value")
-		require.Equal(t, doneTasks+totalNilTasks, int64(maxTasks), "total tasks + nils should be equal to max tasks")
+		require.Equal(t, doneTasks, nonNilTasks, "non-nil-tasks count should be equal to done-tasks")
+	})
+
+	t.Run("Run with empty slice", func(t *testing.T) {
+		workersCount := 5
+		maxErrorsCount := 1
+
+		err := Run([]Task{}, workersCount, maxErrorsCount)
+
+		require.NoError(t, err, "Run with empty slice shouldn't have any errors")
+	})
+
+	t.Run("Run with nil slice", func(t *testing.T) {
+		workersCount := 5
+		maxErrorsCount := 1
+
+		err := Run(nil, workersCount, maxErrorsCount)
+
+		require.NoError(t, err, "Run with nil slice shouldn't have any errors")
+	})
+
+	t.Run("Run with 0 or negative workers arg", func(t *testing.T) {
+		tasks := []Task{}
+		workersCount := 0
+		maxErrorsCount := 1
+		maxTasks := 30
+		var doneTasks int64
+
+		for i := 0; i < maxTasks; i++ {
+			tasks = append(tasks, func() error {
+				atomic.AddInt64(&doneTasks, 1)
+
+				return nil
+			})
+		}
+
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.ErrorIs(t, err, ErrNoWorkers, "should return no-workers error if no workers found")
+		require.Equal(t, int64(0), doneTasks, "tasks shouldn't be done without workers")
+	})
+
+	t.Run("Run with max 0 errors arg", func(t *testing.T) {
+		tasks := []Task{}
+		workersCount := 5
+		maxErrorsCount := 0
+		maxTasks := 30
+		var doneTasks int64
+
+		for i := 0; i < maxTasks; i++ {
+			tasks = append(tasks, func() error {
+				atomic.AddInt64(&doneTasks, 1)
+
+				return nil
+			})
+		}
+
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.ErrorIs(t, err, ErrMaxErrorsIsNotValid, "should return is-not-valid-number error if max-errors number is too small")
+		require.Equal(t, int64(0), doneTasks, "tasks shouldn't be done without workers")
 	})
 }
