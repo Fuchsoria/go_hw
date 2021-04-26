@@ -67,4 +67,95 @@ func TestRun(t *testing.T) {
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
+
+	t.Run("Run with nil values", func(t *testing.T) {
+		tasks := []Task{}
+		maxTasks := 50
+		workersCount := 10
+		maxErrorsCount := 1
+		var nonNilTasks int64
+		var doneTasks int64
+
+		randBool := func() bool {
+			return rand.Intn(2) == 1
+		}
+
+		for i := 0; i < maxTasks; i++ {
+			if nonNil := randBool(); nonNil {
+				nonNilTasks++
+
+				tasks = append(tasks, func() error {
+					atomic.AddInt64(&doneTasks, 1)
+
+					return nil
+				})
+			} else {
+				tasks = append(tasks, nil)
+			}
+		}
+
+		err := Run(tasks, workersCount, maxErrorsCount)
+		require.NoError(t, err, "slice with nil values shouldn't have errors, just ignore value")
+		require.Equal(t, doneTasks, nonNilTasks, "non-nil-tasks count should be equal to done-tasks")
+	})
+
+	t.Run("Run with empty slice", func(t *testing.T) {
+		workersCount := 5
+		maxErrorsCount := 1
+
+		err := Run([]Task{}, workersCount, maxErrorsCount)
+
+		require.NoError(t, err, "Run with empty slice shouldn't have any errors")
+	})
+
+	t.Run("Run with nil slice", func(t *testing.T) {
+		workersCount := 5
+		maxErrorsCount := 1
+
+		err := Run(nil, workersCount, maxErrorsCount)
+
+		require.NoError(t, err, "Run with nil slice shouldn't have any errors")
+	})
+
+	t.Run("Run with 0 or negative workers arg", func(t *testing.T) {
+		tasks := []Task{}
+		workersCount := 0
+		maxErrorsCount := 1
+		maxTasks := 30
+		var doneTasks int64
+
+		for i := 0; i < maxTasks; i++ {
+			tasks = append(tasks, func() error {
+				atomic.AddInt64(&doneTasks, 1)
+
+				return nil
+			})
+		}
+
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.ErrorIs(t, err, ErrNoWorkers, "should return no-workers error if no workers found")
+		require.Equal(t, int64(0), doneTasks, "tasks shouldn't be done without workers")
+	})
+
+	t.Run("Run with max 0 errors arg", func(t *testing.T) {
+		tasks := []Task{}
+		workersCount := 5
+		maxErrorsCount := 0
+		maxTasks := 30
+		var doneTasks int64
+
+		for i := 0; i < maxTasks; i++ {
+			tasks = append(tasks, func() error {
+				atomic.AddInt64(&doneTasks, 1)
+
+				return nil
+			})
+		}
+
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.ErrorIs(t, err, ErrMaxErrorsIsNotValid, "should return is-not-valid-number error if max-errors number is too small")
+		require.Equal(t, int64(0), doneTasks, "tasks shouldn't be done without workers")
+	})
 }
