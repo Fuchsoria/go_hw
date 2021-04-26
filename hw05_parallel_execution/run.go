@@ -22,15 +22,11 @@ func Run(tasks []Task, n, m int) error {
 	var err error
 
 	if n <= 0 {
-		err = ErrNoWorkers
-
-		return err
+		return ErrNoWorkers
 	}
 
 	if m <= 0 {
-		err = ErrMaxErrorsIsNotValid
-
-		return err
+		return ErrMaxErrorsIsNotValid
 	}
 
 	wg.Add(n)
