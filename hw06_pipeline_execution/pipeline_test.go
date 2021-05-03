@@ -1,7 +1,6 @@
 package hw06pipelineexecution
 
 import (
-	"fmt"
 	"runtime"
 	"strconv"
 	"testing"
@@ -11,9 +10,9 @@ import (
 )
 
 const (
-	sleepPerStage  = time.Millisecond * 100
-	fault          = sleepPerStage / 2
-	windowsExtraMs = time.Millisecond * 100
+	sleepPerStage    = time.Millisecond * 100
+	fault            = sleepPerStage / 2
+	windowsExtraTime = time.Millisecond * 100
 )
 
 func TestPipeline(t *testing.T) {
@@ -53,7 +52,6 @@ func TestPipeline(t *testing.T) {
 		result := make([]string, 0, 10)
 		start := time.Now()
 		for s := range ExecutePipeline(in, nil, stages...) {
-			fmt.Println("s", s)
 			result = append(result, s.(string))
 		}
 		elapsed := time.Since(start)
@@ -63,7 +61,7 @@ func TestPipeline(t *testing.T) {
 			require.Less(t,
 				int64(elapsed),
 				// ~0.9s because of windows performance
-				int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault)+int64(windowsExtraMs))
+				int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault)+int64(windowsExtraTime))
 		} else {
 			require.Less(t,
 				int64(elapsed),
