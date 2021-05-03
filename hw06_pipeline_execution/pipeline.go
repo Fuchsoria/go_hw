@@ -13,11 +13,26 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 
 	go func() {
 		for _, stage := range stages {
+			select {
+			case <-done:
+				return
+			default:
+			}
+
 			in = stage(in)
 		}
 
+	L:
 		for item := range in {
-			out <- item
+			select {
+			case <-done:
+				break L
+			default:
+			}
+
+			select {
+			case out <- item:
+			}
 		}
 
 		close(out)

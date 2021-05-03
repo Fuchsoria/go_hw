@@ -2,6 +2,7 @@ package hw06pipelineexecution
 
 import (
 	"fmt"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -10,8 +11,9 @@ import (
 )
 
 const (
-	sleepPerStage = time.Millisecond * 100
-	fault         = sleepPerStage / 2
+	sleepPerStage  = time.Millisecond * 100
+	fault          = sleepPerStage / 2
+	windowsExtraMs = time.Millisecond * 100
 )
 
 func TestPipeline(t *testing.T) {
@@ -57,39 +59,46 @@ func TestPipeline(t *testing.T) {
 		elapsed := time.Since(start)
 
 		require.Equal(t, []string{"102", "104", "106", "108", "110"}, result)
-		require.Less(t,
-			int64(elapsed),
-			// ~0.8s for processing 5 values in 4 stages (100ms every) concurrently
-			int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault))
+		if runtime.GOOS == "windows" {
+			require.Less(t,
+				int64(elapsed),
+				// ~0.9s because of windows performance
+				int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault)+int64(windowsExtraMs))
+		} else {
+			require.Less(t,
+				int64(elapsed),
+				// ~0.8s for processing 5 values in 4 stages (100ms every) concurrently
+				int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault))
+		}
 	})
 
-	// t.Run("done case", func(t *testing.T) {
-	// 	in := make(Bi)
-	// 	done := make(Bi)
-	// 	data := []int{1, 2, 3, 4, 5}
+	t.Run("done case", func(t *testing.T) {
+		in := make(Bi)
+		done := make(Bi)
+		data := []int{1, 2, 3, 4, 5}
 
-	// 	// Abort after 200ms
-	// 	abortDur := sleepPerStage * 2
-	// 	go func() {
-	// 		<-time.After(abortDur)
-	// 		close(done)
-	// 	}()
+		// Abort after 200ms
+		abortDur := sleepPerStage * 2
+		go func() {
+			<-time.After(abortDur)
+			close(done)
+		}()
 
-	// 	go func() {
-	// 		for _, v := range data {
-	// 			in <- v
-	// 		}
-	// 		close(in)
-	// 	}()
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
 
-	// 	result := make([]string, 0, 10)
-	// 	start := time.Now()
-	// 	for s := range ExecutePipeline(in, done, stages...) {
-	// 		result = append(result, s.(string))
-	// 	}
-	// 	elapsed := time.Since(start)
+		result := make([]string, 0, 10)
+		start := time.Now()
+		for s := range ExecutePipeline(in, done, stages...) {
+			result = append(result, s.(string))
+		}
+		elapsed := time.Since(start)
 
-	// 	require.Len(t, result, 0)
-	// 	require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
-	// })
+		require.Len(t, result, 0)
+		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+	})
 }
