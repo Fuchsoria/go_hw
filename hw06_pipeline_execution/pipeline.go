@@ -25,7 +25,9 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 				continue
 			}
 
-			return
+			if _, ok := <-done; !ok {
+				return
+			}
 		}
 
 		for item := range in {
