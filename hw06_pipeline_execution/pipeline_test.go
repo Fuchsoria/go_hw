@@ -99,4 +99,49 @@ func TestPipeline(t *testing.T) {
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
 	})
+
+	t.Run("done and empty channel", func(t *testing.T) {
+		in := make(Bi)
+		done := make(Bi)
+
+		close(done)
+		close(in)
+
+		result := make([]string, 0)
+
+		for s := range ExecutePipeline(in, done, stages...) {
+			result = append(result, s.(string))
+		}
+		require.Len(t, result, 0)
+	})
+
+	t.Run("done and nil channel", func(t *testing.T) {
+		done := make(Bi)
+
+		close(done)
+
+		result := make([]string, 0)
+
+		for s := range ExecutePipeline(nil, done, stages...) {
+			result = append(result, s.(string))
+		}
+		require.Len(t, result, 0)
+	})
+
+	t.Run("nil channels", func(t *testing.T) {
+		result := make([]string, 0)
+
+		for s := range ExecutePipeline(nil, nil, stages...) {
+			result = append(result, s.(string))
+		}
+		require.Len(t, result, 0)
+	})
+
+	t.Run("out channel is closed", func(t *testing.T) {
+		out := ExecutePipeline(nil, nil, stages...)
+
+		_, ok := <-out
+
+		require.False(t, ok)
+	})
 }
