@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/cheggaaa/pb/v3"
 )
@@ -12,6 +13,13 @@ var (
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 )
+
+func create(p string) (*os.File, error) {
+	if err := os.MkdirAll(filepath.Dir(p), 0770); err != nil {
+		return nil, err
+	}
+	return os.Create(p)
+}
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	file, err := os.Open(fromPath)
@@ -43,7 +51,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 	file.Seek(offset, io.SeekStart)
 
-	createdFile, err := os.Create(toPath)
+	createdFile, err := create(toPath)
 	if err != nil {
 		return err
 	}
