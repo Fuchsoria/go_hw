@@ -12,7 +12,7 @@ func TestCopy(t *testing.T) {
 	defer os.RemoveAll("/tmp/copy/")
 
 	t.Run("random 'from' path", func(t *testing.T) {
-		err := Copy("/dev/random", "/tmp/copy/test1/output.txt", 0, 0)
+		err := Copy("/tmp/copy/randomfoldername", "/tmp/copy/test1/output.txt", 0, 0)
 
 		require.ErrorIs(t, err, ErrUnsupportedFile, "should throw error when can't open file")
 	})
