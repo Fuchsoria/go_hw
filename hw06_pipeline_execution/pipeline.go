@@ -9,22 +9,40 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
-	out := make(Bi)
-	defer close(out)
+	fulfilled := make(chan struct{})
+	out := make(Bi, 100000)
+	outEmpty := make(Bi)
+	close(outEmpty)
 
 	if in == nil {
+		close(out)
+
 		return out
 	}
 
-	for _, stage := range stages {
-		if done != nil {
-			<-done
+	go func() {
+		defer close(fulfilled)
+		defer close(out)
 
-			return out
+		for _, stage := range stages {
+			in = stage(in)
 		}
 
-		in = stage(in)
-	}
+		for item := range in {
+			select {
+			case <-done:
+				break
+			case out <- item:
+			}
+		}
+	}()
 
-	return in
+	for {
+		select {
+		case <-done:
+			return outEmpty
+		case <-fulfilled:
+			return out
+		}
+	}
 }
