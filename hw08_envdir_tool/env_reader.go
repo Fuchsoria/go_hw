@@ -17,6 +17,28 @@ type EnvValue struct {
 	NeedRemove bool
 }
 
+func ReadFile(path string) (env EnvValue) {
+	f, err := os.Open(path)
+	if err != nil {
+		return EnvValue{"", true}
+	}
+
+	defer f.Close()
+
+	reader := bufio.NewReader(f)
+
+	line, _, err := reader.ReadLine()
+	if err != nil {
+		return EnvValue{"", true}
+	}
+
+	line = bytes.ReplaceAll(line, []byte{0x00}, []byte("\n"))
+	t := string(line)
+	t = strings.TrimRight(t, "	 ")
+
+	return EnvValue{t, false}
+}
+
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
 func ReadDir(dir string) (Environment, error) {
@@ -29,27 +51,15 @@ func ReadDir(dir string) (Environment, error) {
 
 	for _, f := range files {
 		s := f.Name()
+
+		if wrongName := strings.Contains(s, "="); wrongName {
+			continue
+		}
+
 		path := filepath.Join(dir, s)
-		file, err := os.Open(path)
-		if err != nil {
-			continue
-		}
-		defer file.Close()
+		envValue := ReadFile(path)
 
-		reader := bufio.NewReader(file)
-
-		line, _, err := reader.ReadLine()
-		if err != nil {
-			values[s] = EnvValue{"", true}
-
-			continue
-		}
-
-		line = bytes.ReplaceAll(line, []byte{0x00}, []byte("\n"))
-		t := string(line)
-		t = strings.TrimRight(t, "	 ")
-
-		values[s] = EnvValue{t, false}
+		values[s] = envValue
 	}
 
 	return values, nil

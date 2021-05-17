@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -17,33 +19,50 @@ func TestReadDir(t *testing.T) {
 	})
 
 	t.Run("check empty folder", func(t *testing.T) {
-		os.MkdirAll("/tmp/checkempty", 0777)
-		defer os.RemoveAll("/tmp/checkempty")
+		dir, err := ioutil.TempDir("", "test")
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer os.RemoveAll(dir)
 
-		envs, err := ReadDir("/tmp/checkempty")
+		envs, err := ReadDir(dir)
 
 		require.Equal(t, 0, len(envs), "envs length should be 0")
 		require.NoError(t, err, "should be done without errors")
 	})
 
 	t.Run("check folder", func(t *testing.T) {
-		os.MkdirAll("/tmp/checkfolder", 0777)
-		defer os.RemoveAll("/tmp/checkfolder")
+		dir, err := ioutil.TempDir("", "test")
+		if err != nil {
+			fmt.Println(err)
+		}
 
-		file1, _ := os.Create("/tmp/checkfolder/TESTONE")
+		defer os.RemoveAll(dir)
+
+		file1, err := ioutil.TempFile(dir, "")
+		if err != nil {
+			fmt.Println(err)
+		}
 		io.WriteString(file1, "first")
+		fInfo1, err := file1.Stat()
+		if err != nil {
+			fmt.Println(err)
+		}
 
-		file2, _ := os.Create("/tmp/checkfolder/TESTTWO")
+		file2, err := ioutil.TempFile(dir, "")
+		if err != nil {
+			fmt.Println(err)
+		}
 		io.WriteString(file2, "second")
+		fInfo2, err := file2.Stat()
+		if err != nil {
+			fmt.Println(err)
+		}
 
-		file3, _ := os.Create("/tmp/checkfolder/TESTTHREE")
-		io.WriteString(file3, "third")
+		envs, err := ReadDir(dir)
 
-		envs, err := ReadDir("/tmp/checkfolder")
-
-		require.Equal(t, "first", envs["TESTONE"].Value, "first test value should be equal to 'first'")
-		require.Equal(t, "second", envs["TESTTWO"].Value, "first test value should be equal to 'second'")
-		require.Equal(t, "third", envs["TESTTHREE"].Value, "first test value should be equal to 'third'")
+		require.Equal(t, "first", envs[fInfo1.Name()].Value, "first test value should be equal to 'first'")
+		require.Equal(t, "second", envs[fInfo2.Name()].Value, "first test value should be equal to 'second'")
 		require.NoError(t, err, "should be done without errors")
 	})
 }
