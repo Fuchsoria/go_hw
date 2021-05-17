@@ -1,6 +1,7 @@
 package hw06pipelineexecution
 
 import (
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -9,8 +10,9 @@ import (
 )
 
 const (
-	sleepPerStage = time.Millisecond * 100
-	fault         = sleepPerStage / 2
+	sleepPerStage    = time.Millisecond * 100
+	fault            = sleepPerStage / 2
+	windowsExtraTime = time.Millisecond * 100
 )
 
 func TestPipeline(t *testing.T) {
@@ -55,10 +57,17 @@ func TestPipeline(t *testing.T) {
 		elapsed := time.Since(start)
 
 		require.Equal(t, []string{"102", "104", "106", "108", "110"}, result)
-		require.Less(t,
-			int64(elapsed),
-			// ~0.8s for processing 5 values in 4 stages (100ms every) concurrently
-			int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault))
+		if runtime.GOOS == "windows" {
+			require.Less(t,
+				int64(elapsed),
+				// ~0.9s because of windows performance
+				int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault)+int64(windowsExtraTime))
+		} else {
+			require.Less(t,
+				int64(elapsed),
+				// ~0.8s for processing 5 values in 4 stages (100ms every) concurrently
+				int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault))
+		}
 	})
 
 	t.Run("done case", func(t *testing.T) {
@@ -89,5 +98,50 @@ func TestPipeline(t *testing.T) {
 
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+	})
+
+	t.Run("done and empty channel", func(t *testing.T) {
+		in := make(Bi)
+		done := make(Bi)
+
+		close(done)
+		close(in)
+
+		result := make([]string, 0)
+
+		for s := range ExecutePipeline(in, done, stages...) {
+			result = append(result, s.(string))
+		}
+		require.Len(t, result, 0)
+	})
+
+	t.Run("done and nil channel", func(t *testing.T) {
+		done := make(Bi)
+
+		close(done)
+
+		result := make([]string, 0)
+
+		for s := range ExecutePipeline(nil, done, stages...) {
+			result = append(result, s.(string))
+		}
+		require.Len(t, result, 0)
+	})
+
+	t.Run("nil channels", func(t *testing.T) {
+		result := make([]string, 0)
+
+		for s := range ExecutePipeline(nil, nil, stages...) {
+			result = append(result, s.(string))
+		}
+		require.Len(t, result, 0)
+	})
+
+	t.Run("out channel is closed", func(t *testing.T) {
+		out := ExecutePipeline(nil, nil, stages...)
+
+		_, ok := <-out
+
+		require.False(t, ok)
 	})
 }
