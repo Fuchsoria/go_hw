@@ -52,7 +52,7 @@ func ReadDir(dir string) (Environment, error) {
 	for _, f := range files {
 		s := f.Name()
 
-		if wrongName := strings.Contains(s, "="); wrongName {
+		if strings.Contains(s, "=") {
 			continue
 		}
 

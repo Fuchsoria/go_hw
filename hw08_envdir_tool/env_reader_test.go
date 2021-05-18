@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -20,9 +19,8 @@ func TestReadDir(t *testing.T) {
 
 	t.Run("check empty folder", func(t *testing.T) {
 		dir, err := ioutil.TempDir("", "test")
-		if err != nil {
-			fmt.Println(err)
-		}
+		require.Nilf(t, err, "err should be nil")
+
 		defer os.RemoveAll(dir)
 
 		envs, err := ReadDir(dir)
@@ -33,31 +31,23 @@ func TestReadDir(t *testing.T) {
 
 	t.Run("check folder", func(t *testing.T) {
 		dir, err := ioutil.TempDir("", "test")
-		if err != nil {
-			fmt.Println(err)
-		}
+		require.Nilf(t, err, "err should be nil")
 
 		defer os.RemoveAll(dir)
 
 		file1, err := ioutil.TempFile(dir, "")
-		if err != nil {
-			fmt.Println(err)
-		}
+		require.Nilf(t, err, "err should be nil")
 		io.WriteString(file1, "first")
+
 		fInfo1, err := file1.Stat()
-		if err != nil {
-			fmt.Println(err)
-		}
+		require.Nilf(t, err, "err should be nil")
 
 		file2, err := ioutil.TempFile(dir, "")
-		if err != nil {
-			fmt.Println(err)
-		}
+		require.Nilf(t, err, "err should be nil")
 		io.WriteString(file2, "second")
+
 		fInfo2, err := file2.Stat()
-		if err != nil {
-			fmt.Println(err)
-		}
+		require.Nilf(t, err, "err should be nil")
 
 		envs, err := ReadDir(dir)
 
