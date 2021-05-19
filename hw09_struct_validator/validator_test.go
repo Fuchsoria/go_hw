@@ -41,11 +41,10 @@ func TestValidate(t *testing.T) {
 		in          interface{}
 		expectedErr error
 	}{
-		{
-			// Place your code here.
-		},
-		// ...
-		// Place your code here.
+		{User{"100", "testname", 25, "test@test.ru", "stuff", []string{"5466464587", "6546458483"}, nil}, nil},
+		{App{"112783"}, nil},
+		{Token{}, nil},
+		{Response{200, "test"}, nil},
 	}
 
 	for i, tt := range tests {
@@ -54,6 +53,7 @@ func TestValidate(t *testing.T) {
 			t.Parallel()
 
 			// Place your code here.
+			Validate(tt.in)
 			_ = tt
 		})
 	}
