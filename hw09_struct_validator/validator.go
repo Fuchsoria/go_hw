@@ -1,6 +1,7 @@
 package hw09structvalidator
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -15,8 +16,24 @@ type ValidationError struct {
 
 type ValidationErrors []ValidationError
 
+var (
+	ErrLen            = errors.New("length")
+	ErrRegex          = errors.New("regex")
+	ErrMin            = errors.New("greater")
+	ErrMax            = errors.New("less")
+	ErrIn             = errors.New("lots of")
+	ErrInvalidValues  = errors.New("invalid values")
+	ErrExpectedStruct = errors.New("expected a struct")
+)
+
 func (v ValidationErrors) Error() string {
-	panic("implement me")
+	errStrs := make([]string, 0)
+
+	for _, err := range v {
+		errStrs = append(errStrs, fmt.Sprintf("%s %s", err.Field, err.Err))
+	}
+
+	return strings.Join(errStrs, ", ")
 }
 
 func checkLen(rv reflect.Value, ruleValue string) bool {
@@ -104,8 +121,9 @@ func checkIn(rv reflect.Value, ruleValue string) bool {
 	return isValid
 }
 
-func validateValue(fName string, validateTag string, rv reflect.Value) {
+func validateValue(validateTag string, rv reflect.Value) []error {
 	rules := strings.Split(validateTag, "|")
+	errs := make([]error, 0)
 
 	for _, rule := range rules {
 		r := strings.Split(rule, ":")
@@ -113,57 +131,75 @@ func validateValue(fName string, validateTag string, rv reflect.Value) {
 			continue
 		}
 
-		rType := r[0]
-		rValue := r[1]
+		rType, rValue := r[0], r[1]
+
+		var err error
 
 		switch rType {
 		case "len":
 			isValid := checkLen(rv, rValue)
 			if !isValid {
-				fmt.Println("not valid", fName, rValue, rv.Interface())
+				err = fmt.Errorf("value %v %w must be %s", rv.Interface(), ErrLen, rValue)
 			}
 		case "regexp":
 			isValid := checkRegex(rv, rValue)
 			if !isValid {
-				fmt.Println("not valid", fName, rValue, rv.Interface())
+				err = fmt.Errorf("value %v must match %w %s", rv.Interface(), ErrRegex, rValue)
 			}
 		case "min":
 			isValid := checkMin(rv, rValue)
 			if !isValid {
-				fmt.Println("not valid", fName, rValue, rv.Interface())
+				err = fmt.Errorf("value %v must be %w than %s", rv.Interface(), ErrMin, rValue)
 			}
 		case "max":
 			isValid := checkMax(rv, rValue)
 			if !isValid {
-				fmt.Println("not valid", fName, rValue, rv.Interface())
+				err = fmt.Errorf("value %v must be %w than %s", rv.Interface(), ErrMax, rValue)
 			}
 		case "in":
 			isValid := checkIn(rv, rValue)
 			if !isValid {
-				fmt.Println("not valid", fName, rValue, rv.Interface())
+				err = fmt.Errorf("value %v must be %w %s", rv.Interface(), ErrIn, rValue)
 			}
+		default:
+			continue
+		}
+
+		if err != nil {
+			errs = append(errs, err)
 		}
 	}
+
+	return errs
 }
 
-func checkValue(fName string, validateTag string, rv reflect.Value) {
+func checkValue(valErrs *ValidationErrors, fName string, validateTag string, rv reflect.Value) {
+	var errs []error
+
 	switch rv.Kind() {
 	case reflect.String:
-		validateValue(fName, validateTag, rv)
+		errs = validateValue(validateTag, rv)
 	case reflect.Int:
-		validateValue(fName, validateTag, rv)
+		errs = validateValue(validateTag, rv)
 	case reflect.Slice:
 		for i := 0; i < rv.Len(); i++ {
-			checkValue(fName, validateTag, rv.Index(i))
+			checkValue(valErrs, fName, validateTag, rv.Index(i))
+		}
+	}
+
+	if len(errs) > 0 {
+		for _, err := range errs {
+			*valErrs = append(*valErrs, ValidationError{fName, err})
 		}
 	}
 }
 
-func Validate(v interface{}) error {
-	// Place your code here.
+func Validate(v interface{}) (ValidationErrors, error) {
+	errs := make(ValidationErrors, 0)
+
 	iv := reflect.ValueOf(v)
 	if iv.Kind() != reflect.Struct {
-		return fmt.Errorf("expected a struct, but received %T", v)
+		return nil, ErrExpectedStruct
 	}
 
 	t := iv.Type()
@@ -177,8 +213,12 @@ func Validate(v interface{}) error {
 			continue
 		}
 
-		checkValue(field.Name, validateTag, fv)
+		checkValue(&errs, field.Name, validateTag, fv)
 	}
 
-	return nil
+	if len(errs) > 0 {
+		return errs, ErrInvalidValues
+	}
+
+	return nil, nil
 }

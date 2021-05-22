@@ -41,7 +41,7 @@ func TestValidate(t *testing.T) {
 		in          interface{}
 		expectedErr error
 	}{
-		{User{"100", "testname", 25, "test@test.ru", "stuff", []string{"5466464587", "6546458483"}, nil}, nil},
+		{User{"100", "testname", 25, "test@test.ru", "stuff", []string{"5466", "6546458483"}, nil}, nil},
 		{App{"112783"}, nil},
 		{Token{}, nil},
 		{Response{200, "test"}, nil},
@@ -53,7 +53,8 @@ func TestValidate(t *testing.T) {
 			t.Parallel()
 
 			// Place your code here.
-			Validate(tt.in)
+			_, err := Validate(tt.in)
+			fmt.Println(err)
 			_ = tt
 		})
 	}
