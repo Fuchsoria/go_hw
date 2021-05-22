@@ -137,28 +137,23 @@ func validateValue(validateTag string, rv reflect.Value) []error {
 
 		switch rType {
 		case "len":
-			isValid := checkLen(rv, rValue)
-			if !isValid {
+			if !checkLen(rv, rValue) {
 				err = fmt.Errorf("value %v %w must be %s", rv.Interface(), ErrLen, rValue)
 			}
 		case "regexp":
-			isValid := checkRegex(rv, rValue)
-			if !isValid {
+			if !checkRegex(rv, rValue) {
 				err = fmt.Errorf("value %v must match %w %s", rv.Interface(), ErrRegex, rValue)
 			}
 		case "min":
-			isValid := checkMin(rv, rValue)
-			if !isValid {
+			if !checkMin(rv, rValue) {
 				err = fmt.Errorf("value %v must be %w than %s", rv.Interface(), ErrMin, rValue)
 			}
 		case "max":
-			isValid := checkMax(rv, rValue)
-			if !isValid {
+			if !checkMax(rv, rValue) {
 				err = fmt.Errorf("value %v must be %w than %s", rv.Interface(), ErrMax, rValue)
 			}
 		case "in":
-			isValid := checkIn(rv, rValue)
-			if !isValid {
+			if !checkIn(rv, rValue) {
 				err = fmt.Errorf("value %v must be %w %s", rv.Interface(), ErrIn, rValue)
 			}
 		default:
