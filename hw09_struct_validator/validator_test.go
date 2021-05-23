@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -38,24 +40,45 @@ type (
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		in          interface{}
-		expectedErr error
+		in              interface{}
+		expectedErr     error
+		expectedValErrs []error
 	}{
-		{User{"100", "testname", 25, "test@test.ru", "stuff", []string{"5466", "6546458483"}, nil}, nil},
-		{App{"112783"}, nil},
-		{Token{}, nil},
-		{Response{200, "test"}, nil},
+		{
+			User{"100", "testname", 10, "test@test.ru", "stuff", []string{"5466", "6546458483"}, nil},
+			ErrInvalidValues,
+			[]error{ErrLen, ErrMin, ErrLen, ErrLen},
+		},
+		{App{"112783"}, ErrInvalidValues, []error{ErrLen}},
+		{Token{}, nil, nil},
+		{Response{200, "test"}, nil, nil},
 	}
 
-	for i, tt := range tests {
+	for i, tc := range tests {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			tt := tt
+			tc := tc
 			t.Parallel()
 
-			// Place your code here.
-			_, err := Validate(tt.in)
-			fmt.Println(err)
-			_ = tt
+			valErrs, err := Validate(tc.in)
+
+			require.ErrorIs(t, tc.expectedErr, err, "Error should be like expected")
+
+			for i, err := range tc.expectedValErrs {
+				require.ErrorIs(t, valErrs[i].Err, err, "Validation error should be like expected")
+			}
 		})
 	}
+
+	t.Run("should handle non struct value", func(t *testing.T) {
+		_, err := Validate(123)
+
+		require.ErrorIs(t, err, ErrExpectedStruct, "Should throw nonStruct error")
+	})
+
+	t.Run("should handle nil value", func(t *testing.T) {
+		valErrs, err := Validate(nil)
+
+		require.ErrorIs(t, err, ErrExpectedStruct, "Should throw nonStruct error")
+		require.Nil(t, valErrs, "Val Errors should be nil")
+	})
 }
