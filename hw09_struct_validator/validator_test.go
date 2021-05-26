@@ -2,6 +2,7 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -41,17 +42,15 @@ type (
 func TestValidate(t *testing.T) {
 	tests := []struct {
 		in              interface{}
-		expectedErr     error
 		expectedValErrs []error
 	}{
 		{
 			User{"100", "testname", 10, "test@test.ru", "stuff", []string{"5466", "6546458483"}, nil},
-			ErrInvalidValues,
 			[]error{ErrLen, ErrMin, ErrLen, ErrLen},
 		},
-		{App{"112783"}, ErrInvalidValues, []error{ErrLen}},
-		{Token{}, nil, nil},
-		{Response{200, "test"}, nil, nil},
+		{App{"112783"}, []error{ErrLen}},
+		{Token{}, nil},
+		{Response{200, "test"}, nil},
 	}
 
 	for i, tc := range tests {
@@ -59,26 +58,27 @@ func TestValidate(t *testing.T) {
 			tc := tc
 			t.Parallel()
 
-			valErrs, err := Validate(tc.in)
+			err := Validate(tc.in)
 
-			require.ErrorIs(t, tc.expectedErr, err, "Error should be like expected")
+			var valErrs ValidationErrors
 
-			for i, err := range tc.expectedValErrs {
-				require.ErrorIs(t, valErrs[i].Err, err, "Validation error should be like expected")
+			if errors.As(err, &valErrs) {
+				for i, err := range tc.expectedValErrs {
+					require.ErrorIs(t, valErrs[i].Err, err, "Validation error should be like expected")
+				}
 			}
 		})
 	}
 
 	t.Run("should handle non struct value", func(t *testing.T) {
-		_, err := Validate(123)
+		err := Validate(123)
 
 		require.ErrorIs(t, err, ErrExpectedStruct, "Should throw nonStruct error")
 	})
 
 	t.Run("should handle nil value", func(t *testing.T) {
-		valErrs, err := Validate(nil)
+		err := Validate(nil)
 
 		require.ErrorIs(t, err, ErrExpectedStruct, "Should throw nonStruct error")
-		require.Nil(t, valErrs, "Val Errors should be nil")
 	})
 }

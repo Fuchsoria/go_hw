@@ -27,13 +27,17 @@ var (
 )
 
 func (v ValidationErrors) Error() string {
-	errStrs := make([]string, 0)
+	errStrs := strings.Builder{}
 
-	for _, err := range v {
-		errStrs = append(errStrs, fmt.Sprintf("%s %s", err.Field, err.Err))
+	for i, err := range v {
+		errStrs.WriteString(fmt.Sprintf("%s %s", err.Field, err.Err))
+
+		if i != len(v)-1 {
+			errStrs.WriteString(": ")
+		}
 	}
 
-	return strings.Join(errStrs, ", ")
+	return errStrs.String()
 }
 
 func checkLen(rv reflect.Value, ruleValue string) bool {
@@ -138,7 +142,7 @@ func validateValue(validateTag string, rv reflect.Value) []error {
 		switch rType {
 		case "len":
 			if !checkLen(rv, rValue) {
-				err = fmt.Errorf("%w must be %s", ErrLen, rValue)
+				err = fmt.Errorf("%w must be equal %s", ErrLen, rValue)
 			}
 		case "regexp":
 			if !checkRegex(rv, rValue) {
@@ -168,8 +172,11 @@ func validateValue(validateTag string, rv reflect.Value) []error {
 	return errs
 }
 
-func checkValue(valErrs *ValidationErrors, fName string, validateTag string, rv reflect.Value) {
-	var errs []error
+func checkValue(valErrs ValidationErrors, fName string, validateTag string, rv reflect.Value) ValidationErrors {
+	var (
+		errs       []error
+		newValErrs = valErrs
+	)
 
 	switch rv.Kind() {
 	case reflect.String:
@@ -178,23 +185,25 @@ func checkValue(valErrs *ValidationErrors, fName string, validateTag string, rv 
 		errs = validateValue(validateTag, rv)
 	case reflect.Slice:
 		for i := 0; i < rv.Len(); i++ {
-			checkValue(valErrs, fName, validateTag, rv.Index(i))
+			newValErrs = checkValue(newValErrs, fName, validateTag, rv.Index(i))
 		}
 	}
 
 	if len(errs) > 0 {
 		for _, err := range errs {
-			*valErrs = append(*valErrs, ValidationError{fName, err})
+			newValErrs = append(newValErrs, ValidationError{fName, err})
 		}
 	}
+
+	return newValErrs
 }
 
-func Validate(v interface{}) (ValidationErrors, error) {
+func Validate(v interface{}) error {
 	errs := make(ValidationErrors, 0)
 
 	iv := reflect.ValueOf(v)
 	if iv.Kind() != reflect.Struct {
-		return nil, ErrExpectedStruct
+		return fmt.Errorf("%w, received %s ", ErrExpectedStruct, iv.Kind())
 	}
 
 	t := iv.Type()
@@ -208,12 +217,12 @@ func Validate(v interface{}) (ValidationErrors, error) {
 			continue
 		}
 
-		checkValue(&errs, field.Name, validateTag, fv)
+		errs = checkValue(errs, field.Name, validateTag, fv)
 	}
 
 	if len(errs) > 0 {
-		return errs, ErrInvalidValues
+		return errs
 	}
 
-	return nil, nil
+	return nil
 }
