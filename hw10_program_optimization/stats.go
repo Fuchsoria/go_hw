@@ -41,7 +41,7 @@ func getUsers(r io.Reader) (result users, err error) {
 	i := 0
 	for buf.Scan() {
 		var user User
-		if err = json.Unmarshal([]byte(buf.Text()), &user); err != nil {
+		if err = json.Unmarshal(buf.Bytes(), &user); err != nil {
 			return
 		}
 
