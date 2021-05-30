@@ -3,6 +3,7 @@ package hw10programoptimization
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -10,7 +11,10 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var (
+	json           = jsoniter.ConfigCompatibleWithStandardLibrary
+	ErrReaderIsNil = errors.New("reader is nil")
+)
 
 type User struct {
 	ID       int
@@ -35,6 +39,10 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 type users [100_000]User
 
 func getUsers(r io.Reader, domain string) (result users, err error) {
+	if r == nil {
+		return users{}, ErrReaderIsNil
+	}
+
 	buf := bufio.NewScanner(r)
 	domainBytes := []byte("." + domain)
 
