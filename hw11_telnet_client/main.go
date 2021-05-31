@@ -41,8 +41,7 @@ func main() {
 	host, port := os.Args[length-2], os.Args[length-1]
 
 	client := NewTelnetClient(net.JoinHostPort(host, port), timeout, os.Stdin, os.Stdout)
-	err := client.Connect()
-	if err != nil {
+	if err := client.Connect(); err != nil {
 		log.Panic(ErrCantConnect)
 	}
 	defer client.Close()
