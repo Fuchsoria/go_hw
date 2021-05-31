@@ -21,11 +21,12 @@ func init() {
 	flag.DurationVar(&timeout, "timeout", time.Second*10, "timeout duration")
 }
 
-func handleErrors(errs chan<- error, client TelnetClient) {
-	select {
-	case errs <- client.Receive():
-	case errs <- client.Send():
-	}
+func handleReceiver(errs chan error, client TelnetClient) {
+	errs <- client.Receive()
+}
+
+func handleSender(errs chan error, client TelnetClient) {
+	errs <- client.Send()
 }
 
 func main() {
@@ -51,7 +52,8 @@ func main() {
 
 	signal.Notify(signCh, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
-	go handleErrors(errsCh, client)
+	go handleReceiver(errsCh, client)
+	go handleSender(errsCh, client)
 
 	select {
 	case <-signCh:

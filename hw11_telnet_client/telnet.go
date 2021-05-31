@@ -36,6 +36,7 @@ func (c *telnetClient) Connect() error {
 func (c *telnetClient) Close() error {
 	return c.connection.Close()
 }
+
 func (c *telnetClient) Send() error {
 	scanner := bufio.NewScanner(c.in)
 
