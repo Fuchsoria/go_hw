@@ -57,7 +57,7 @@ func main() {
 	select {
 	case <-signCh:
 		signal.Stop(signCh)
-	case err := <-errsCh:
-		log.Fatal(err)
+	case <-errsCh:
+		return
 	}
 }
