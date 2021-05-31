@@ -58,6 +58,6 @@ func main() {
 	case <-signCh:
 		signal.Stop(signCh)
 	case err := <-errsCh:
-		log.Panic(err)
+		log.Fatal(err)
 	}
 }
