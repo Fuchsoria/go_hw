@@ -2,6 +2,9 @@ package app
 
 import (
 	"context"
+	"time"
+
+	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage"
 )
 
 type App struct { // TODO
@@ -17,6 +20,12 @@ type Logger interface {
 }
 
 type Storage interface {
+	AddEvent(event storage.Event) error
+	UpdateEvent(eventId string, event storage.Event) error
+	RemoveEvent(eventId string) error
+	DailyEvents(date time.Time) []storage.Event
+	WeeklyEvents(date time.Time) []storage.Event
+	MonthEvents(date time.Time) []storage.Event
 }
 
 func New(logger Logger, storage Storage) *App {

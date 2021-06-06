@@ -13,6 +13,8 @@ import (
 	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage/memory"
+	_ "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/migrations"
+	"github.com/pressly/goose"
 )
 
 var (
@@ -35,6 +37,17 @@ func main() {
 	config := NewConfig()
 	fmt.Println(config)
 	logg := logger.New(config.Logger.Level, config.Logger.File)
+
+	db, err := goose.OpenDBWithDriver("postgres", config.DB.ConnectionString)
+	if err != nil {
+		logg.Error(fmt.Sprintf("goose: failed to open DB: %v\n", err))
+	}
+
+	defer func() {
+		if err := db.Close(); err != nil {
+			logg.Error(fmt.Sprintf("goose: failed to close DB: %v\n", err))
+		}
+	}()
 
 	storage := memorystorage.New()
 	calendar := app.New(logg, storage)

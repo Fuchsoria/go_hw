@@ -12,23 +12,31 @@ type Storage struct {
 	mu    sync.RWMutex
 }
 
-func (s *Storage) AddEvent(event storage.Event) {
+func (s *Storage) AddEvent(event storage.Event) error {
 	s.store[event.ID] = event
+
+	return nil
 }
 
-func (s *Storage) UpdateEvent(eventId string, event storage.Event) {
+func (s *Storage) UpdateEvent(eventId string, event storage.Event) error {
 	s.store[eventId] = event
+
+	return nil
 }
 
-func (s *Storage) RemoveEvent(eventId string) {
+func (s *Storage) RemoveEvent(eventId string) error {
 	delete(s.store, eventId)
+
+	return nil
 }
 
 func (s *Storage) DailyEvents(date time.Time) []storage.Event {
 	result := []storage.Event{}
 
 	for _, event := range s.store {
-		if event.Date.Format("02-01-2006") == date.Format("02-01-2006") {
+		eventDate := time.Unix(event.Date, 0)
+
+		if eventDate.Year() == date.Year() && eventDate.Month() == date.Month() && eventDate.Day() == date.Day() {
 			result = append(result, event)
 		}
 	}
@@ -40,7 +48,8 @@ func (s *Storage) WeeklyEvents(date time.Time) []storage.Event {
 	result := []storage.Event{}
 
 	for _, event := range s.store {
-		eYear, eWeek := event.Date.ISOWeek()
+		eventDate := time.Unix(event.Date, 0)
+		eYear, eWeek := eventDate.ISOWeek()
 		cYear, cWeek := date.ISOWeek()
 
 		if eYear == cYear && eWeek == cWeek {
@@ -55,7 +64,8 @@ func (s *Storage) MonthEvents(date time.Time) []storage.Event {
 	result := []storage.Event{}
 
 	for _, event := range s.store {
-		if event.Date.Format("01-2006") == date.Format("01-2006") {
+		eventDate := time.Unix(event.Date, 0)
+		if eventDate.Year() == date.Year() && eventDate.Month() == date.Month() {
 			result = append(result, event)
 		}
 	}
@@ -66,5 +76,3 @@ func (s *Storage) MonthEvents(date time.Time) []storage.Event {
 func New() *Storage {
 	return &Storage{}
 }
-
-// TODO

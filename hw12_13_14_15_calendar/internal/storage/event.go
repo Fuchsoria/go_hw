@@ -1,13 +1,11 @@
 package storage
 
-import "time"
-
 type Event struct {
 	ID            string
 	Title         string
-	Date          time.Time
-	DurationUntil time.Time
+	Date          int64
+	DurationUntil int64
 	Description   string
 	OwnerID       string
-	NoticeBefore  time.Duration
+	NoticeBefore  int64
 }
