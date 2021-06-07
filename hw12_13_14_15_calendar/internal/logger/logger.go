@@ -13,14 +13,7 @@ type logger struct { // TODO
 	instance *zap.Logger
 }
 
-type LoggerI interface {
-	Info(msg string, fields ...interface{})
-	Warn(msg string, fields ...interface{})
-	Debug(msg string, fields ...interface{})
-	Error(msg string, fields ...interface{})
-}
-
-func New(level string, file string) LoggerI {
+func New(level string, file string) *logger {
 	w := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   file,
 		MaxSize:    500, // megabytes

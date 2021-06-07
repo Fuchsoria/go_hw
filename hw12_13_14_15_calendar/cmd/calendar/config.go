@@ -27,7 +27,7 @@ type DBConf struct {
 
 type HTTPConf struct {
 	Host string `json:"host"`
-	Port int    `json:"port"`
+	Port string `json:"port"`
 }
 
 func NewConfig() Config {
@@ -35,12 +35,12 @@ func NewConfig() Config {
 
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
-		panic(fmt.Errorf("Fatal error config file: %w \n", err))
+		panic(fmt.Errorf("fatal error config file: %w", err))
 	}
 
 	return Config{
 		LoggerConf{viper.GetString("logger.level"), viper.GetString("logger.file")},
 		DBConf{viper.GetString("db.method"), viper.GetString("db.connection_string")},
-		HTTPConf{viper.GetString("http.host"), viper.GetInt("http.port")},
+		HTTPConf{viper.GetString("http.host"), viper.GetString("http.port")},
 	}
 }
