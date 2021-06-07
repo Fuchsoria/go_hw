@@ -41,26 +41,26 @@ func New(level string, file string) *logger {
 	return &logger{levelMap, zap.New(core)}
 }
 
-func (l logger) Info(msg string, fields ...interface{}) {
+func (l logger) Info(msg string, keysAndValues ...interface{}) {
 	if l.level["info"] {
-		l.instance.Sugar().Info(msg, fields)
+		l.instance.Sugar().Infow(msg, keysAndValues...)
 	}
 }
 
-func (l logger) Debug(msg string, fields ...interface{}) {
+func (l logger) Debug(msg string, keysAndValues ...interface{}) {
 	if l.level["debug"] {
-		l.instance.Sugar().Debug(msg)
+		l.instance.Sugar().Infow(msg, keysAndValues...)
 	}
 }
 
-func (l logger) Warn(msg string, fields ...interface{}) {
+func (l logger) Warn(msg string, keysAndValues ...interface{}) {
 	if l.level["warn"] {
-		l.instance.Sugar().Warn(msg)
+		l.instance.Sugar().Infow(msg, keysAndValues...)
 	}
 }
 
-func (l logger) Error(msg string, fields ...interface{}) {
+func (l logger) Error(msg string, keysAndValues ...interface{}) {
 	if l.level["error"] {
-		l.instance.Sugar().Error(msg)
+		l.instance.Sugar().Infow(msg, keysAndValues...)
 	}
 }

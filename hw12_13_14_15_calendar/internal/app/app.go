@@ -13,10 +13,10 @@ type App struct { // TODO
 }
 
 type Logger interface {
-	Info(msg string, fields ...interface{})
-	Warn(msg string, fields ...interface{})
-	Debug(msg string, fields ...interface{})
-	Error(msg string, fields ...interface{})
+	Info(msg string, keysAndValues ...interface{})
+	Warn(msg string, keysAndValues ...interface{})
+	Debug(msg string, keysAndValues ...interface{})
+	Error(msg string, keysAndValues ...interface{})
 }
 
 type Storage interface {
