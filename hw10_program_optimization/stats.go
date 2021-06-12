@@ -36,7 +36,7 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	return countDomains(u, domain)
 }
 
-type users [100]User
+type users []User
 
 func getUsers(r io.Reader, domain string) (result users, err error) {
 	if r == nil {
@@ -60,7 +60,7 @@ func getUsers(r io.Reader, domain string) (result users, err error) {
 			return
 		}
 
-		result[i] = user
+		result = append(result, user)
 
 		i++
 	}
