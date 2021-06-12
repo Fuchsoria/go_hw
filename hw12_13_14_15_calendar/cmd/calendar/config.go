@@ -33,8 +33,7 @@ type HTTPConf struct {
 func NewConfig() Config {
 	viper.SetConfigFile(configFile)
 
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
+	if err := viper.ReadInConfig(); err != nil { // Handle errors reading the config file
 		panic(fmt.Errorf("fatal error config file: %w", err))
 	}
 

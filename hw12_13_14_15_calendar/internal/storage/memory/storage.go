@@ -18,19 +18,21 @@ func (s *Storage) AddEvent(event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) UpdateEvent(eventId string, event storage.Event) error {
-	s.store[eventId] = event
+func (s *Storage) UpdateEvent(event storage.Event) error {
+	s.mu.Lock()
+	s.store[event.ID] = event
+	s.mu.Unlock()
 
 	return nil
 }
 
-func (s *Storage) RemoveEvent(eventId string) error {
-	delete(s.store, eventId)
+func (s *Storage) RemoveEvent(eventID string) error {
+	delete(s.store, eventID)
 
 	return nil
 }
 
-func (s *Storage) DailyEvents(date time.Time) []storage.Event {
+func (s *Storage) DailyEvents(date time.Time) ([]storage.Event, error) {
 	result := []storage.Event{}
 
 	for _, event := range s.store {
@@ -41,10 +43,10 @@ func (s *Storage) DailyEvents(date time.Time) []storage.Event {
 		}
 	}
 
-	return result
+	return result, nil
 }
 
-func (s *Storage) WeeklyEvents(date time.Time) []storage.Event {
+func (s *Storage) WeeklyEvents(date time.Time) ([]storage.Event, error) {
 	result := []storage.Event{}
 
 	for _, event := range s.store {
@@ -57,10 +59,10 @@ func (s *Storage) WeeklyEvents(date time.Time) []storage.Event {
 		}
 	}
 
-	return result
+	return result, nil
 }
 
-func (s *Storage) MonthEvents(date time.Time) []storage.Event {
+func (s *Storage) MonthEvents(date time.Time) ([]storage.Event, error) {
 	result := []storage.Event{}
 
 	for _, event := range s.store {
@@ -70,9 +72,9 @@ func (s *Storage) MonthEvents(date time.Time) []storage.Event {
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func New() *Storage {
-	return &Storage{}
+	return &Storage{store: map[string]storage.Event{}}
 }

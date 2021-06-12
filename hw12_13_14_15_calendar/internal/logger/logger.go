@@ -8,12 +8,12 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-type logger struct { // TODO
+type Logger struct {
 	level    map[string]bool
 	instance *zap.Logger
 }
 
-func New(level string, file string) *logger {
+func New(level string, file string) *Logger {
 	w := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   file,
 		MaxSize:    500, // megabytes
@@ -38,28 +38,28 @@ func New(level string, file string) *logger {
 		levelMap[level] = true
 	}
 
-	return &logger{levelMap, zap.New(core)}
+	return &Logger{levelMap, zap.New(core)}
 }
 
-func (l logger) Info(msg string, keysAndValues ...interface{}) {
+func (l *Logger) Info(msg string, keysAndValues ...interface{}) {
 	if l.level["info"] {
 		l.instance.Sugar().Infow(msg, keysAndValues...)
 	}
 }
 
-func (l logger) Debug(msg string, keysAndValues ...interface{}) {
+func (l *Logger) Debug(msg string, keysAndValues ...interface{}) {
 	if l.level["debug"] {
 		l.instance.Sugar().Infow(msg, keysAndValues...)
 	}
 }
 
-func (l logger) Warn(msg string, keysAndValues ...interface{}) {
+func (l *Logger) Warn(msg string, keysAndValues ...interface{}) {
 	if l.level["warn"] {
 		l.instance.Sugar().Infow(msg, keysAndValues...)
 	}
 }
 
-func (l logger) Error(msg string, keysAndValues ...interface{}) {
+func (l *Logger) Error(msg string, keysAndValues ...interface{}) {
 	if l.level["error"] {
 		l.instance.Sugar().Infow(msg, keysAndValues...)
 	}

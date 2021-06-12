@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,12 +13,13 @@ import (
 	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage/memory"
-	_ "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/migrations"
-	"github.com/pressly/goose"
+	sqlstorage "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage/sql"
+	_ "github.com/lib/pq"
 )
 
 var (
-	configFile string
+	configFile           string
+	ErrCantCreateStorage = errors.New("can not create storage")
 )
 
 func init() {
@@ -33,27 +34,20 @@ func main() {
 		return
 	}
 
-	fmt.Println(os.Getwd())
+	ctx, cancel := context.WithCancel(context.Background())
+
 	config := NewConfig()
-	fmt.Println(config)
+
 	logg := logger.New(config.Logger.Level, config.Logger.File)
 
-	db, err := goose.OpenDBWithDriver("postgres", config.DB.ConnectionString)
+	storage, err := createStorage(ctx, config)
 	if err != nil {
-		logg.Error(fmt.Sprintf("goose: failed to open DB: %v\n", err))
+		logg.Error(err.Error())
 	}
 
-	defer func() {
-		if err := db.Close(); err != nil {
-			logg.Error(fmt.Sprintf("goose: failed to close DB: %v\n", err))
-		}
-	}()
-
-	storage := memorystorage.New()
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(calendar)
-	ctx, cancel := context.WithCancel(context.Background())
+	server := internalhttp.NewServer(calendar, config.HTTP.Host, config.HTTP.Port)
 	defer cancel()
 
 	go func() {
@@ -79,9 +73,32 @@ func main() {
 
 	logg.Info("calendar is running...")
 
-	if err := server.Start(ctx, config.HTTP.Host, config.HTTP.Port); err != nil {
+	if err := server.Start(ctx); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}
+}
+
+func createStorage(ctx context.Context, config Config) (app.Storage, error) {
+	switch config.DB.Method {
+	case "in-memory":
+		storage := memorystorage.New()
+
+		return storage, nil
+	case "sql":
+		storage, err := sqlstorage.New(ctx, config.DB.ConnectionString)
+		if err != nil {
+			return nil, err
+		}
+
+		err = storage.Connect(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		return storage, nil
+	}
+
+	return nil, ErrCantCreateStorage
 }
