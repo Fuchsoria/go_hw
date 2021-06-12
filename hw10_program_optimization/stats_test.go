@@ -16,6 +16,12 @@ func TestGetDomainStat(t *testing.T) {
 {"Id":4,"Name":"Gregory Reid","Username":"tButler","Email":"5Moore@Teklist.net","Phone":"520-04-16","Password":"r639qLNu","Address":"Sunfield Park 20"}
 {"Id":5,"Name":"Janice Rose","Username":"KeithHart","Email":"nulla@Linktype.com","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}`
 
+	dataWithDoubleDomain := `{"Id":1,"Name":"Howard Mendoza","Username":"0Oliver","Email":"aliquid_qui_ea@test.ru","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}
+{"Id":2,"Name":"Jesse Vasquez","Username":"qRichardson","Email":"mLy.ru@broWsecat.com","Phone":"9-373-949-64-00","Password":"SiZLeNSGn","Address":"Fulton Hill 80"}`
+
+	wrongData := `{"Id":1,"Name":"Howard Mendoza"}
+{"Id":2,"Name":"Jesse Vasquez"}`
+
 	t.Run("find 'com'", func(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(data), "com")
 		require.NoError(t, err)
@@ -29,6 +35,29 @@ func TestGetDomainStat(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(data), "gov")
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{"browsedrive.gov": 1}, result)
+	})
+
+	t.Run("check HasSuffix instead of Contains", func(t *testing.T) {
+		result, err := GetDomainStat(bytes.NewBufferString(dataWithDoubleDomain), "ru")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{"test.ru": 1}, result)
+	})
+
+	t.Run("check empty data", func(t *testing.T) {
+		result, err := GetDomainStat(bytes.NewBufferString(""), "ru")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{}, result, "should return empty data")
+	})
+
+	t.Run("check nil data", func(t *testing.T) {
+		_, err := GetDomainStat(nil, "")
+		require.ErrorIs(t, err, ErrReaderIsNil, "should throw error")
+	})
+
+	t.Run("check wrong json data", func(t *testing.T) {
+		result, err := GetDomainStat(bytes.NewBufferString(wrongData), "ru")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{}, result, "should return empty data")
 	})
 
 	t.Run("find 'unknown'", func(t *testing.T) {
