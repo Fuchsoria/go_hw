@@ -13,19 +13,20 @@ import (
 
 var (
 	timeout               time.Duration
-	ErrWrongArgumentCount = errors.New("wrong arguments count")
-	ErrCantConnect        = errors.New("cannot connect to telnet")
+	defaultTimeout        time.Duration = time.Second * 10
+	ErrWrongArgumentCount               = errors.New("wrong arguments count")
+	ErrCantConnect                      = errors.New("cannot connect to telnet")
 )
 
 func init() {
-	flag.DurationVar(&timeout, "timeout", time.Second*10, "timeout duration")
+	flag.DurationVar(&timeout, "timeout", defaultTimeout, "timeout duration")
 }
 
-func handleReceiver(errs chan error, client TelnetClient) {
+func handleReceiver(errs chan<- error, client TelnetClient) {
 	errs <- client.Receive()
 }
 
-func handleSender(errs chan error, client TelnetClient) {
+func handleSender(errs chan<- error, client TelnetClient) {
 	errs <- client.Send()
 }
 
@@ -48,16 +49,12 @@ func main() {
 
 	errsCh := make(chan error)
 	signCh := make(chan os.Signal, 1)
+	defer signal.Stop(signCh)
 
 	signal.Notify(signCh, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
 	go handleReceiver(errsCh, client)
 	go handleSender(errsCh, client)
 
-	select {
-	case <-signCh:
-		signal.Stop(signCh)
-	case <-errsCh:
-		return
-	}
+	<-signCh
 }
