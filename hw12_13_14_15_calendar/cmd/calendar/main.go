@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,7 +20,7 @@ import (
 
 var (
 	configFile           string
-	ErrCantCreateStorage = errors.New("can not create storage")
+	ErrCantCreateStorage = errors.New("cannot create storage")
 )
 
 func init() {
@@ -36,13 +37,18 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	config := NewConfig()
+	config, err := NewConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	logg := logger.New(config.Logger.Level, config.Logger.File)
 
 	storage, err := createStorage(ctx, config)
 	if err != nil {
 		logg.Error(err.Error())
+
+		panic(err)
 	}
 
 	calendar := app.New(logg, storage)
@@ -89,12 +95,12 @@ func createStorage(ctx context.Context, config Config) (app.Storage, error) {
 	case "sql":
 		storage, err := sqlstorage.New(ctx, config.DB.ConnectionString)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("can't create new storage instance, %w", err)
 		}
 
 		err = storage.Connect(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("can't connect to storage, %w", err)
 		}
 
 		return storage, nil

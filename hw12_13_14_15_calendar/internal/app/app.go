@@ -38,7 +38,7 @@ func New(logger Logger, storage Storage) *App {
 func (a *App) CreateEvent(title string, date int64) error {
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return fmt.Errorf("can not create unique id, %w", err)
+		return fmt.Errorf("cannot create unique id, %w", err)
 	}
 
 	event := storage.Event{ID: id.String(), Title: title, Date: date, OwnerID: ownerID}

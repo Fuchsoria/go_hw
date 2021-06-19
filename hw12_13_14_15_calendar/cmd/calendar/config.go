@@ -30,16 +30,16 @@ type HTTPConf struct {
 	Port string `json:"port"`
 }
 
-func NewConfig() Config {
+func NewConfig() (Config, error) {
 	viper.SetConfigFile(configFile)
 
 	if err := viper.ReadInConfig(); err != nil { // Handle errors reading the config file
-		panic(fmt.Errorf("fatal error config file: %w", err))
+		return Config{}, fmt.Errorf("fatal error config file: %w", err)
 	}
 
 	return Config{
 		LoggerConf{viper.GetString("logger.level"), viper.GetString("logger.file")},
 		DBConf{viper.GetString("db.method"), viper.GetString("db.connection_string")},
 		HTTPConf{viper.GetString("http.host"), viper.GetString("http.port")},
-	}
+	}, nil
 }

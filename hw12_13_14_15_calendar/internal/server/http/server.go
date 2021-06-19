@@ -36,13 +36,7 @@ func NewServer(app *app.App, address string, port string) *Server {
 func (s *Server) Start(ctx context.Context) error {
 	err := s.server.ListenAndServe()
 	if err != nil {
-		return fmt.Errorf("can not start http server, %w", err)
-	}
-
-	<-ctx.Done()
-
-	if err := s.Stop(ctx); err != nil {
-		return fmt.Errorf("can not stop http server, %w", err)
+		return fmt.Errorf("cannot start http server, %w", err)
 	}
 
 	return nil
@@ -50,7 +44,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 func (s *Server) Stop(ctx context.Context) error {
 	if err := s.server.Shutdown(ctx); err != nil {
-		return fmt.Errorf("can not shutdown http server, %w", err)
+		return fmt.Errorf("cannot shutdown http server, %w", err)
 	}
 
 	return nil
