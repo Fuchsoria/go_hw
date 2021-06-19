@@ -1,0 +1,5 @@
+{
+  "logger": { "level": "error|warn|info|debug", "file": "./logs/logs.log" },
+  "db": { "method": "sql", "connection_string": "host=127.0.0.1 port=5432 user=postgres password=example dbname=calendar sslmode=disable" },
+  "http": { "host": "127.0.0.1", "port": 5555 }
+}
