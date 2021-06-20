@@ -31,4 +31,10 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run
 
+generate-deps:
+	mkdir -p internal/server/eventpb
+
+generate: generate-deps
+	protoc --proto_path=api/ --go_out=internal/server/eventpb  --go-grpc_out=internal/server/eventpb  api/*.proto
+
 .PHONY: build run build-img run-img version test lint

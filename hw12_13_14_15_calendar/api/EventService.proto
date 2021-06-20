@@ -2,6 +2,44 @@ syntax = "proto3";
 
 package event;
 
+option go_package = "./;eventpb";
+
 message Event {
-    // TODO
+    string id = 1;
+    string title = 2;
+    int64 date = 3;
+    int64 duration_until = 4;
+    string description = 5;
+    string owner_id = 6;
+    int64 notice_before = 7;
+}
+
+message ShortEvent {
+    string title = 1;
+    int64 date = 2;
+}
+
+message Message {
+    string message = 1;
+}
+
+message ID {
+    string id = 1;
+}
+
+message Date {
+    int64 date = 1;
+}
+
+message Events {
+    repeated Event results = 1;
+}
+
+service Calendar {
+    rpc CreateEvent(ShortEvent) returns (Message) {}
+    rpc UpdateEvent(Event) returns (Message) {}
+    rpc DeleteEvent(ID) returns (Message) {}
+    rpc DailyEvents(Date) returns (Events) {}
+    rpc WeeklyEvents(Date) returns (Events) {}
+    rpc MonthEvents(Date) returns (Events) {}
 }

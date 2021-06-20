@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,8 @@ import (
 )
 
 const ownerID string = "main_owner_id"
+
+var ErrCantFindID = errors.New("cannot find event id")
 
 type App struct {
 	logger  Logger
@@ -46,8 +49,10 @@ func (a *App) CreateEvent(title string, date int64) error {
 	return a.storage.AddEvent(event)
 }
 
-func (a *App) UpdateEvent(id, title string, date int64, description string, durationUntil int64, ownerID string, noticeBefore int64) error {
-	event := storage.Event{ID: id, Title: title, Date: date, DurationUntil: durationUntil, Description: description, OwnerID: ownerID, NoticeBefore: noticeBefore}
+func (a *App) UpdateEvent(event storage.Event) error {
+	if event.ID == "" {
+		return fmt.Errorf("cannot update event, %w", ErrCantFindID)
+	}
 
 	return a.storage.UpdateEvent(event)
 }
