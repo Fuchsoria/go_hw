@@ -7,6 +7,7 @@ import (
 
 	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 const ownerID string = "main_owner_id"
@@ -23,6 +24,7 @@ type Logger interface {
 	Warn(msg string, keysAndValues ...interface{})
 	Debug(msg string, keysAndValues ...interface{})
 	Error(msg string, keysAndValues ...interface{})
+	GetInstance() *zap.Logger
 }
 
 type Storage interface {

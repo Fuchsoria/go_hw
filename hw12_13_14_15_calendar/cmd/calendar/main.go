@@ -12,7 +12,7 @@ import (
 
 	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/app"
 	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/server/http"
+	gateway "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/server/grpc"
 	memorystorage "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage/sql"
 	_ "github.com/lib/pq"
@@ -53,7 +53,11 @@ func main() {
 
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(calendar, config.HTTP.Host, config.HTTP.Port)
+	server, err := gateway.NewServer(calendar, config.HTTP.Host, config.HTTP.Port, config.HTTP.GrpcPort)
+	if err != nil {
+		logg.Error(err.Error())
+	}
+
 	defer cancel()
 
 	go func() {
@@ -73,14 +77,14 @@ func main() {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			logg.Error("failed to stop grpc server: " + err.Error())
 		}
 	}()
 
 	logg.Info("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
+		logg.Error("failed to start grpc server: " + err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}

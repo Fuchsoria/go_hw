@@ -32,16 +32,19 @@ lint: install-lint-deps
 	golangci-lint run
 
 generate-deps:
-	mkdir -p internal/server/eventpb && mkdir -p internal/server/gateway
+	mkdir -p internal/server/eventpb
 
 generate: generate-deps
-	protoc --proto_path=api/ --go_out=internal/server/eventpb  --go-grpc_out=internal/server/eventpb  api/*.proto
+	protoc -I ./proto \
+    --go_out ./internal/server/eventpb/ --go_opt paths=source_relative \
+    --go-grpc_out ./internal/server/eventpb/ --go-grpc_opt paths=source_relative \
+    proto/EventService/*.proto
 
-generate-gateway:
-	protoc -I . --grpc-gateway_out ./internal/server/gateway \
-    --grpc-gateway_opt logtostderr=true \
-    --grpc-gateway_opt paths=source_relative \
-    --grpc-gateway_opt generate_unbound_methods=true \
-    ./api/EventService.proto
+generate-gateway: generate
+	protoc -I ./proto --grpc-gateway_out ./internal/server/eventpb \
+			--grpc-gateway_opt logtostderr=true \
+			--grpc-gateway_opt paths=source_relative \
+			--grpc-gateway_opt generate_unbound_methods=true \
+			proto/EventService/*.proto
 
 .PHONY: build run build-img run-img version test lint

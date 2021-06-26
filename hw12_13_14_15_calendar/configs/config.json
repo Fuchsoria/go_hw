@@ -4,5 +4,5 @@
     "method": "sql",
     "connection_string": "host=127.0.0.1 port=5432 user=postgres password=root dbname=calendar sslmode=disable"
   },
-  "http": { "host": "127.0.0.1", "port": 5555 }
+  "http": { "host": "127.0.0.1", "port": 5555, "grpc_port": 7777 }
 }

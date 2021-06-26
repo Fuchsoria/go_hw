@@ -63,3 +63,7 @@ func (l *Logger) Warn(msg string, keysAndValues ...interface{}) {
 func (l *Logger) Error(msg string, keysAndValues ...interface{}) {
 	l.instance.Sugar().Infow(msg, keysAndValues...)
 }
+
+func (l *Logger) GetInstance() *zap.Logger {
+	return l.instance
+}

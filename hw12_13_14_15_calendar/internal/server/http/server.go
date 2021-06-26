@@ -184,7 +184,6 @@ func (h *Handler) getBodyData(w http.ResponseWriter, r *http.Request, bData inte
 	}
 
 	if err = json.Unmarshal(b, &bData); err != nil {
-		fmt.Println(err)
 		h.send(w, http.StatusBadRequest, Message{"Bad request"})
 
 		return fmt.Errorf("cannot unmarshall body, %w", err)
