@@ -83,6 +83,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	err := h.getBodyData(w, r, &bData)
 	if err != nil {
 		h.send(w, http.StatusInternalServerError, Message{err.Error()})
+
+		return
 	}
 
 	err = h.app.CreateEvent(bData.Title, int64(bData.Date))
@@ -101,6 +103,8 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	err := h.getBodyData(w, r, &event)
 	if err != nil {
 		h.send(w, http.StatusInternalServerError, Message{err.Error()})
+
+		return
 	}
 
 	err = h.app.UpdateEvent(event)
@@ -121,6 +125,8 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	err := h.getBodyData(w, r, &bData)
 	if err != nil {
 		h.send(w, http.StatusInternalServerError, Message{err.Error()})
+
+		return
 	}
 
 	err = h.app.RemoveEvent(bData.ID)
@@ -153,6 +159,8 @@ func (h *Handler) getEventsByDate(w http.ResponseWriter, r *http.Request, dateTy
 	err := h.getBodyData(w, r, &bData)
 	if err != nil {
 		h.send(w, http.StatusInternalServerError, Message{err.Error()})
+
+		return
 	}
 
 	var (
@@ -170,6 +178,8 @@ func (h *Handler) getEventsByDate(w http.ResponseWriter, r *http.Request, dateTy
 	}
 	if err != nil {
 		h.send(w, http.StatusInternalServerError, Message{err.Error()})
+
+		return
 	}
 
 	h.send(w, http.StatusOK, Results{events})

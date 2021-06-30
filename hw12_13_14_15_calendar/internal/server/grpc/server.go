@@ -15,6 +15,8 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Server struct {
@@ -28,10 +30,6 @@ type grpcserver struct {
 }
 
 func NewServer(app *app.App, address string, port string, grpcPort string) (*Server, error) {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	grpcServerEndpoint := net.JoinHostPort(address, grpcPort)
 
 	lis, err := net.Listen("tcp", grpcServerEndpoint)
@@ -57,8 +55,11 @@ func NewServer(app *app.App, address string, port string, grpcPort string) (*Ser
 		}
 	}()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	conn, err := grpc.DialContext(
-		context.Background(),
+		ctx,
 		grpcServerEndpoint,
 		grpc.WithBlock(),
 		grpc.WithInsecure(),
@@ -110,7 +111,7 @@ func (s *Server) Stop(ctx context.Context) error {
 func (s *grpcserver) CreateEvent(ctx context.Context, in *gw.ShortEvent) (*gw.Message, error) {
 	err := s.app.CreateEvent(in.Title, in.Date)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create event, %w", err)
+		return nil, status.Errorf(codes.Internal, "cannot create event, %s", err)
 	}
 
 	return &gw.Message{Message: "Created new"}, nil
@@ -129,7 +130,7 @@ func (s *grpcserver) UpdateEvent(ctx context.Context, in *gw.Event) (*gw.Message
 
 	err := s.app.UpdateEvent(event)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update event, %w", err)
+		return nil, status.Errorf(codes.Internal, "cannot update event, %s", err)
 	}
 
 	return &gw.Message{Message: "Updated"}, nil
@@ -138,7 +139,7 @@ func (s *grpcserver) UpdateEvent(ctx context.Context, in *gw.Event) (*gw.Message
 func (s *grpcserver) DeleteEvent(ctx context.Context, in *gw.ID) (*gw.Message, error) {
 	err := s.app.RemoveEvent(in.Id)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete event, %w", err)
+		return nil, status.Errorf(codes.Internal, "cannot delete event, %s", err)
 	}
 
 	return &gw.Message{Message: "Deleted"}, nil
@@ -149,23 +150,22 @@ func (s *grpcserver) DailyEvents(ctx context.Context, in *gw.Date) (*gw.Events, 
 
 	events, err := s.app.DailyEvents(time)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get events, %w", err)
+		return nil, status.Errorf(codes.Internal, "cannot get events, %s", err)
 	}
 
 	gwEvents := &gw.Events{}
-	gwEvents.Results = []*gw.Event{}
+	gwEvents.Results = make([]*gw.Event, len(events))
 
-	for _, event := range events {
-		gwEvents.Results = append(gwEvents.Results,
-			&gw.Event{
-				Id:            event.ID,
-				Title:         event.Title,
-				Date:          event.Date,
-				DurationUntil: event.DurationUntil,
-				Description:   event.Description,
-				OwnerId:       event.OwnerID,
-				NoticeBefore:  event.NoticeBefore,
-			})
+	for i, event := range events {
+		gwEvents.Results[i] = &gw.Event{
+			Id:            event.ID,
+			Title:         event.Title,
+			Date:          event.Date,
+			DurationUntil: event.DurationUntil,
+			Description:   event.Description,
+			OwnerId:       event.OwnerID,
+			NoticeBefore:  event.NoticeBefore,
+		}
 	}
 
 	return gwEvents, nil
@@ -176,23 +176,22 @@ func (s *grpcserver) WeeklyEvents(ctx context.Context, in *gw.Date) (*gw.Events,
 
 	events, err := s.app.WeeklyEvents(time)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get events, %w", err)
+		return nil, status.Errorf(codes.Internal, "cannot get events, %s", err)
 	}
 
 	gwEvents := &gw.Events{}
-	gwEvents.Results = []*gw.Event{}
+	gwEvents.Results = make([]*gw.Event, len(events))
 
-	for _, event := range events {
-		gwEvents.Results = append(gwEvents.Results,
-			&gw.Event{
-				Id:            event.ID,
-				Title:         event.Title,
-				Date:          event.Date,
-				DurationUntil: event.DurationUntil,
-				Description:   event.Description,
-				OwnerId:       event.OwnerID,
-				NoticeBefore:  event.NoticeBefore,
-			})
+	for i, event := range events {
+		gwEvents.Results[i] = &gw.Event{
+			Id:            event.ID,
+			Title:         event.Title,
+			Date:          event.Date,
+			DurationUntil: event.DurationUntil,
+			Description:   event.Description,
+			OwnerId:       event.OwnerID,
+			NoticeBefore:  event.NoticeBefore,
+		}
 	}
 
 	return gwEvents, nil
@@ -203,23 +202,22 @@ func (s *grpcserver) MonthEvents(ctx context.Context, in *gw.Date) (*gw.Events, 
 
 	events, err := s.app.MonthEvents(time)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get events, %w", err)
+		return nil, status.Errorf(codes.Internal, "cannot get events, %s", err)
 	}
 
 	gwEvents := &gw.Events{}
-	gwEvents.Results = []*gw.Event{}
+	gwEvents.Results = make([]*gw.Event, len(events))
 
-	for _, event := range events {
-		gwEvents.Results = append(gwEvents.Results,
-			&gw.Event{
-				Id:            event.ID,
-				Title:         event.Title,
-				Date:          event.Date,
-				DurationUntil: event.DurationUntil,
-				Description:   event.Description,
-				OwnerId:       event.OwnerID,
-				NoticeBefore:  event.NoticeBefore,
-			})
+	for i, event := range events {
+		gwEvents.Results[i] = &gw.Event{
+			Id:            event.ID,
+			Title:         event.Title,
+			Date:          event.Date,
+			DurationUntil: event.DurationUntil,
+			Description:   event.Description,
+			OwnerId:       event.OwnerID,
+			NoticeBefore:  event.NoticeBefore,
+		}
 	}
 
 	return gwEvents, nil
