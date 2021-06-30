@@ -16,7 +16,7 @@ type Storage struct {
 func New(ctx context.Context, connectionString string) (*Storage, error) {
 	db, err := sqlx.ConnectContext(ctx, "postgres", connectionString)
 	if err != nil {
-		return nil, fmt.Errorf("can not open db, %w", err)
+		return nil, fmt.Errorf("cannot open db, %w", err)
 	}
 
 	return &Storage{db}, nil
@@ -24,7 +24,7 @@ func New(ctx context.Context, connectionString string) (*Storage, error) {
 
 func (s *Storage) Connect(ctx context.Context) error {
 	if err := s.db.PingContext(ctx); err != nil {
-		return fmt.Errorf("can not connect to db, %w", err)
+		return fmt.Errorf("cannot connect to db, %w", err)
 	}
 
 	return nil
@@ -53,7 +53,7 @@ func (s *Storage) RemoveEvent(eventID string) error {
 }
 
 func (s *Storage) eventsFromTo(fromTS int64, toTS int64) ([]storage.Event, error) {
-	result := []storage.Event{}
+	var result []storage.Event
 
 	err := s.db.Select(&result, "SELECT * FROM events WHERE date BETWEEN $1 AND $2", fromTS, toTS)
 	if err != nil {

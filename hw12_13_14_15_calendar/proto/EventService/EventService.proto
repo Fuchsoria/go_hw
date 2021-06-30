@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package event;
+
+import "google/api/annotations.proto";
+
+option go_package = "./;eventpb";
+
+message Event {
+    string id = 1 [json_name="id"];
+    string title = 2 [json_name="title"];
+    int64 date = 3 [json_name="date"];
+    int64 duration_until = 4 [json_name="duration_until"];
+    string description = 5 [json_name="description"];
+    string owner_id = 6 [json_name="owner_id"];
+    int64 notice_before = 7 [json_name="notice_before"];
+}
+
+message ShortEvent {
+    string title = 1;
+    int64 date = 2;
+}
+
+message Message {
+    string message = 1;
+}
+
+message ID {
+    string id = 1;
+}
+
+message Date {
+    int64 date = 1;
+}
+
+message Events {
+    repeated Event results = 1;
+}
+
+service Calendar {
+    rpc CreateEvent(ShortEvent) returns (Message) {
+        option (google.api.http) = {
+            post: "/event/create"
+            body: "*"
+          };
+    }
+    rpc UpdateEvent(Event) returns (Message) {
+        option (google.api.http) = {
+            post: "/event/update"
+            body: "*"
+          };
+    }
+    rpc DeleteEvent(ID) returns (Message) {
+        option (google.api.http) = {
+            post: "/event/delete"
+            body: "*"
+          };
+    }
+    rpc DailyEvents(Date) returns (Events) {
+        option (google.api.http) = {
+            post: "/event/daily"
+            body: "*"
+          };
+    }
+    rpc WeeklyEvents(Date) returns (Events) {
+        option (google.api.http) = {
+            post: "/event/weekly"
+            body: "*"
+          };
+    }
+    rpc MonthEvents(Date) returns (Events) {
+        option (google.api.http) = {
+            post: "/event/month"
+            body: "*"
+          };
+    }
+}

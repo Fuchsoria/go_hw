@@ -1,15 +1,12 @@
 package logger
 
 import (
-	"strings"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 type Logger struct {
-	level    map[string]bool
 	instance *zap.Logger
 }
 
@@ -25,42 +22,48 @@ func New(level string, file string) *Logger {
 	cfg.EncodeTime = zapcore.RFC3339TimeEncoder
 	cfg.TimeKey = "time"
 
+	aLevel := zap.NewAtomicLevel()
+
+	switch level {
+	case "debug":
+		aLevel.SetLevel(zapcore.DebugLevel)
+	case "panic":
+		aLevel.SetLevel(zapcore.PanicLevel)
+	case "error":
+		aLevel.SetLevel(zapcore.ErrorLevel)
+	case "info":
+		aLevel.SetLevel(zapcore.InfoLevel)
+	case "fatal":
+		aLevel.SetLevel(zapcore.FatalLevel)
+	case "warn":
+		aLevel.SetLevel(zapcore.WarnLevel)
+	}
+
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(cfg),
 		w,
-		zap.InfoLevel,
+		aLevel,
 	)
 
-	levels := strings.Split(level, "|")
-	levelMap := make(map[string]bool)
-
-	for _, level := range levels {
-		levelMap[level] = true
-	}
-
-	return &Logger{levelMap, zap.New(core)}
+	return &Logger{zap.New(core)}
 }
 
 func (l *Logger) Info(msg string, keysAndValues ...interface{}) {
-	if l.level["info"] {
-		l.instance.Sugar().Infow(msg, keysAndValues...)
-	}
+	l.instance.Sugar().Infow(msg, keysAndValues...)
 }
 
 func (l *Logger) Debug(msg string, keysAndValues ...interface{}) {
-	if l.level["debug"] {
-		l.instance.Sugar().Infow(msg, keysAndValues...)
-	}
+	l.instance.Sugar().Infow(msg, keysAndValues...)
 }
 
 func (l *Logger) Warn(msg string, keysAndValues ...interface{}) {
-	if l.level["warn"] {
-		l.instance.Sugar().Infow(msg, keysAndValues...)
-	}
+	l.instance.Sugar().Infow(msg, keysAndValues...)
 }
 
 func (l *Logger) Error(msg string, keysAndValues ...interface{}) {
-	if l.level["error"] {
-		l.instance.Sugar().Infow(msg, keysAndValues...)
-	}
+	l.instance.Sugar().Infow(msg, keysAndValues...)
+}
+
+func (l *Logger) GetInstance() *zap.Logger {
+	return l.instance
 }

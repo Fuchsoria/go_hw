@@ -1,14 +1,18 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 const ownerID string = "main_owner_id"
+
+var ErrCantFindID = errors.New("cannot find event id")
 
 type App struct {
 	logger  Logger
@@ -20,6 +24,7 @@ type Logger interface {
 	Warn(msg string, keysAndValues ...interface{})
 	Debug(msg string, keysAndValues ...interface{})
 	Error(msg string, keysAndValues ...interface{})
+	GetInstance() *zap.Logger
 }
 
 type Storage interface {
@@ -38,7 +43,7 @@ func New(logger Logger, storage Storage) *App {
 func (a *App) CreateEvent(title string, date int64) error {
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return fmt.Errorf("can not create unique id, %w", err)
+		return fmt.Errorf("cannot create unique id, %w", err)
 	}
 
 	event := storage.Event{ID: id.String(), Title: title, Date: date, OwnerID: ownerID}
@@ -46,8 +51,10 @@ func (a *App) CreateEvent(title string, date int64) error {
 	return a.storage.AddEvent(event)
 }
 
-func (a *App) UpdateEvent(id, title string, date int64, description string, durationUntil int64, ownerID string, noticeBefore int64) error {
-	event := storage.Event{ID: id, Title: title, Date: date, DurationUntil: durationUntil, Description: description, OwnerID: ownerID, NoticeBefore: noticeBefore}
+func (a *App) UpdateEvent(event storage.Event) error {
+	if event.ID == "" {
+		return fmt.Errorf("cannot update event, %w", ErrCantFindID)
+	}
 
 	return a.storage.UpdateEvent(event)
 }
