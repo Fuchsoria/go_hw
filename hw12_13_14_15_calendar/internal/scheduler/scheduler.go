@@ -63,8 +63,8 @@ func (s *Scheduler) SendNotificationsToEvents(producer *simpleproducer.Producer)
 }
 
 func (s *Scheduler) Start(ctx context.Context) error {
-	delay := (time.Duration(s.recheckDelay) * time.Second)
-	s.ticker = time.NewTicker(delay)
+	delay := s.recheckDelay * int64(time.Second)
+	s.ticker = time.NewTicker(time.Duration(delay))
 	defer s.ticker.Stop()
 
 	conn, err := amqp.Dial(s.amqpURI)
