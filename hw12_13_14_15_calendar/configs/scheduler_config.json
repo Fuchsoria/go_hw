@@ -1,0 +1,8 @@
+{
+  "logger": { "level": "debug", "file": "./logs/logs.log" },
+  "db": {
+    "connection_string": "host=127.0.0.1 port=5432 user=postgres password=root dbname=calendar sslmode=disable"
+  },
+  "scheduler": { "recheck_delay_seconds": 10 },
+  "ampq": { "uri": "amqp://guest:guest@localhost:5672/", "name": "events" }
+}
