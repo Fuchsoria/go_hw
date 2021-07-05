@@ -11,6 +11,7 @@ import (
 	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/scheduler"
 	sqlstorage "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage/sql"
+	version "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/version"
 	_ "github.com/lib/pq"
 )
 
@@ -24,7 +25,7 @@ func main() {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
-		printVersion()
+		version.PrintVersion()
 		return
 	}
 
@@ -45,7 +46,7 @@ func main() {
 		panic(err)
 	}
 
-	scheduler := scheduler.NewScheduler(logg, storage, config.Scheduler.RecheckDelaySeconds, config.AMPQ.uri, config.AMPQ.name)
+	scheduler := scheduler.NewScheduler(logg, storage, config.Scheduler.RecheckDelaySeconds, config.AMPQ.URI, config.AMPQ.Name)
 
 	go func() {
 		signals := make(chan os.Signal, 1)

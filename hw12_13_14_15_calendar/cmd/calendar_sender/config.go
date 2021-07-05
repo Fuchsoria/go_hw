@@ -17,8 +17,8 @@ type LoggerConf struct {
 }
 
 type AMPQConf struct {
-	uri  string
-	name string
+	URI  string `json:"uri"`
+	Name string `json:"name"`
 }
 
 func NewConfig() (Config, error) {
@@ -29,8 +29,8 @@ func NewConfig() (Config, error) {
 	}
 
 	return Config{
-			LoggerConf{viper.GetString("logger.level"), viper.GetString("logger.file")},
-			AMPQConf{viper.GetString("ampq.uri"), viper.GetString("ampq.name")},
+			LoggerConf{Level: viper.GetString("logger.level"), File: viper.GetString("logger.file")},
+			AMPQConf{URI: viper.GetString("ampq.uri"), Name: viper.GetString("ampq.name")},
 		},
 		nil
 }

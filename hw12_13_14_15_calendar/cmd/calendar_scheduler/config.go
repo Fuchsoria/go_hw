@@ -22,8 +22,8 @@ type DBConf struct {
 }
 
 type AMPQConf struct {
-	uri  string
-	name string
+	URI  string `json:"uri"`
+	Name string `json:"name"`
 }
 
 type LoggerConf struct {
@@ -39,9 +39,9 @@ func NewConfig() (Config, error) {
 	}
 
 	return Config{
-		SchedulerConfig{viper.GetInt64("scheduler.recheck_delay_seconds")},
-		DBConf{viper.GetString("db.connection_string")},
-		LoggerConf{viper.GetString("logger.level"), viper.GetString("logger.file")},
-		AMPQConf{viper.GetString("ampq.uri"), viper.GetString("ampq.name")},
+		SchedulerConfig{RecheckDelaySeconds: viper.GetInt64("scheduler.recheck_delay_seconds")},
+		DBConf{ConnectionString: viper.GetString("db.connection_string")},
+		LoggerConf{Level: viper.GetString("logger.level"), File: viper.GetString("logger.file")},
+		AMPQConf{URI: viper.GetString("ampq.uri"), Name: viper.GetString("ampq.name")},
 	}, nil
 }

@@ -9,6 +9,7 @@ import (
 
 	simpleconsumer "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/amqp/consumer"
 	"github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/logger"
+	version "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/version"
 	"github.com/streadway/amqp"
 )
 
@@ -22,7 +23,7 @@ func main() {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
-		printVersion()
+		version.PrintVersion()
 		return
 	}
 
@@ -36,14 +37,14 @@ func main() {
 
 	logg := logger.New(config.Logger.Level, config.Logger.File)
 
-	conn, err := amqp.Dial(config.AMPQ.uri)
+	conn, err := amqp.Dial(config.AMPQ.URI)
 	if err != nil {
 		panic(err)
 	}
 
-	c := simpleconsumer.New(config.AMPQ.name, conn, logg)
+	c := simpleconsumer.New(config.AMPQ.Name, conn, logg)
 
-	msgs, err := c.Consume(ctx, config.AMPQ.name)
+	msgs, err := c.Consume(ctx, config.AMPQ.Name)
 	if err != nil {
 		logg.Error(fmt.Errorf("cannot consume messages, %w", err).Error())
 	}

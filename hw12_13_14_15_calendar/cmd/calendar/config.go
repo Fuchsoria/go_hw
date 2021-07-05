@@ -36,8 +36,8 @@ func NewConfig() (Config, error) {
 	}
 
 	return Config{
-		LoggerConf{viper.GetString("logger.level"), viper.GetString("logger.file")},
-		DBConf{viper.GetString("db.method"), viper.GetString("db.connection_string")},
-		HTTPConf{viper.GetString("http.host"), viper.GetString("http.port"), viper.GetString("http.grpc_port")},
+		LoggerConf{Level: viper.GetString("logger.level"), File: viper.GetString("logger.file")},
+		DBConf{Method: viper.GetString("db.method"), ConnectionString: viper.GetString("db.connection_string")},
+		HTTPConf{Host: viper.GetString("http.host"), Port: viper.GetString("http.port"), GrpcPort: viper.GetString("http.grpc_port")},
 	}, nil
 }

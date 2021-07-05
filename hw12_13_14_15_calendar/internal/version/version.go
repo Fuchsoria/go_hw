@@ -1,4 +1,4 @@
-package main
+package version
 
 import (
 	"encoding/json"
@@ -6,18 +6,20 @@ import (
 	"os"
 )
 
+type Version struct {
+	Release   string
+	BuildDate string
+	GitHash   string
+}
+
 var (
 	release   = "UNKNOWN"
 	buildDate = "UNKNOWN"
 	gitHash   = "UNKNOWN"
 )
 
-func printVersion() {
-	if err := json.NewEncoder(os.Stdout).Encode(struct {
-		Release   string
-		BuildDate string
-		GitHash   string
-	}{
+func PrintVersion() {
+	if err := json.NewEncoder(os.Stdout).Encode(Version{
 		Release:   release,
 		BuildDate: buildDate,
 		GitHash:   gitHash,

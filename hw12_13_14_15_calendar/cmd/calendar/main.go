@@ -15,6 +15,7 @@ import (
 	gateway "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/server/grpc"
 	memorystorage "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/storage/sql"
+	version "github.com/Fuchsoria/go_hw/hw12_13_14_15_calendar/internal/version"
 	_ "github.com/lib/pq"
 )
 
@@ -31,7 +32,8 @@ func main() {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
-		printVersion()
+		version.PrintVersion()
+
 		return
 	}
 
