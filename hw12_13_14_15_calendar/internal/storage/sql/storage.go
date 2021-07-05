@@ -52,6 +52,12 @@ func (s *Storage) RemoveEvent(eventID string) error {
 	return err
 }
 
+func (s *Storage) RemoveOldEvents(ts int64) error {
+	_, err := s.db.Exec("DELETE FROM events WHERE date<$1", ts)
+
+	return err
+}
+
 func (s *Storage) eventsFromTo(fromTS int64, toTS int64) ([]storage.Event, error) {
 	var result []storage.Event
 
@@ -97,6 +103,27 @@ func (s *Storage) MonthEvents(date time.Time) ([]storage.Event, error) {
 	to := current.AddDate(0, 1, 0).Unix()
 
 	result, err := s.eventsFromTo(from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Storage) GetEventsForNotification() ([]storage.Event, error) {
+	var result []storage.Event
+
+	current := time.Now()
+	fromTS := current.Add(-(time.Second * 30)).Unix()
+	toTS := current.Add(time.Second * 30).Unix()
+
+	err := s.db.Select(&result, "SELECT * FROM events WHERE notice_before != -1 AND date-notice_before BETWEEN $1 AND $2", fromTS, toTS)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	_, err = s.db.Exec("UPDATE events SET notice_before=-1 WHERE notice_before != -1 AND date-notice_before BETWEEN $1 AND $2", fromTS, toTS)
 	if err != nil {
 		return nil, err
 	}

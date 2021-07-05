@@ -6,9 +6,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// При желании конфигурацию можно вынести в internal/config.
-// Организация конфига в main принуждает нас сужать API компонентов, использовать
-// при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
 	Logger LoggerConf `json:"logger"`
 	DB     DBConf     `json:"db"`
@@ -39,8 +36,8 @@ func NewConfig() (Config, error) {
 	}
 
 	return Config{
-		LoggerConf{viper.GetString("logger.level"), viper.GetString("logger.file")},
-		DBConf{viper.GetString("db.method"), viper.GetString("db.connection_string")},
-		HTTPConf{viper.GetString("http.host"), viper.GetString("http.port"), viper.GetString("http.grpc_port")},
+		LoggerConf{Level: viper.GetString("logger.level"), File: viper.GetString("logger.file")},
+		DBConf{Method: viper.GetString("db.method"), ConnectionString: viper.GetString("db.connection_string")},
+		HTTPConf{Host: viper.GetString("http.host"), Port: viper.GetString("http.port"), GrpcPort: viper.GetString("http.grpc_port")},
 	}, nil
 }
