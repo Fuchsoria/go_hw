@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,7 +35,7 @@ func main() {
 
 	config, err := NewConfig()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	logg := logger.New(config.Logger.Level, config.Logger.File)
@@ -43,7 +44,7 @@ func main() {
 	if err != nil {
 		logg.Error(err.Error())
 
-		panic(err)
+		log.Fatal(err)
 	}
 
 	scheduler := scheduler.NewScheduler(logg, storage, config.Scheduler.RecheckDelaySeconds, config.AMPQ.URI, config.AMPQ.Name)

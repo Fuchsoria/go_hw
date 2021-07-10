@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os/signal"
 	"syscall"
 
@@ -32,14 +33,14 @@ func main() {
 
 	config, err := NewConfig()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	logg := logger.New(config.Logger.Level, config.Logger.File)
 
 	conn, err := amqp.Dial(config.AMPQ.URI)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	c := simpleconsumer.New(config.AMPQ.Name, conn, logg)
