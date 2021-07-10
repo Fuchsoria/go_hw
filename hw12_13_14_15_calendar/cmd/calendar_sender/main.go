@@ -28,9 +28,6 @@ func main() {
 		return
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-
 	config, err := NewConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -42,6 +39,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 
 	c := simpleconsumer.New(config.AMPQ.Name, conn, logg)
 

@@ -30,9 +30,6 @@ func main() {
 		return
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	config, err := NewConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -40,12 +37,16 @@ func main() {
 
 	logg := logger.New(config.Logger.Level, config.Logger.File)
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	storage, err := connectStorage(ctx, config)
 	if err != nil {
 		logg.Error(err.Error())
 
 		log.Fatal(err)
 	}
+
+	defer cancel()
 
 	scheduler := scheduler.NewScheduler(logg, storage, config.Scheduler.RecheckDelaySeconds, config.AMPQ.URI, config.AMPQ.Name)
 
