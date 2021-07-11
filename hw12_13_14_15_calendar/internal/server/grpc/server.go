@@ -29,6 +29,8 @@ type grpcserver struct {
 	app app.App
 }
 
+var ErrBadRequest = errors.New("bad request")
+
 func NewServer(app *app.App, address string, port string, grpcPort string) (*Server, error) {
 	grpcServerEndpoint := net.JoinHostPort(address, grpcPort)
 
@@ -109,6 +111,10 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *grpcserver) CreateEvent(ctx context.Context, in *gw.ShortEvent) (*gw.Message, error) {
+	if in.Title == "" || in.Date == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot create event, %s", ErrBadRequest)
+	}
+
 	err := s.app.CreateEvent(in.Title, in.Date)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create event, %s", err)
@@ -137,7 +143,15 @@ func (s *grpcserver) UpdateEvent(ctx context.Context, in *gw.Event) (*gw.Message
 }
 
 func (s *grpcserver) DeleteEvent(ctx context.Context, in *gw.ID) (*gw.Message, error) {
+	if in.Id == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot delete event, %s", ErrBadRequest)
+	}
+
 	err := s.app.RemoveEvent(in.Id)
+	if errors.Is(err, storage.ErrNotFound) {
+		return nil, status.Errorf(codes.NotFound, "event not found, %s", err)
+	}
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot delete event, %s", err)
 	}
@@ -145,7 +159,30 @@ func (s *grpcserver) DeleteEvent(ctx context.Context, in *gw.ID) (*gw.Message, e
 	return &gw.Message{Message: "Deleted"}, nil
 }
 
+func (s *grpcserver) TimeEvents(ctx context.Context, in *gw.Date, events []storage.Event) (*gw.Events, error) {
+	gwEvents := &gw.Events{}
+	gwEvents.Results = make([]*gw.Event, len(events))
+
+	for i, event := range events {
+		gwEvents.Results[i] = &gw.Event{
+			Id:            event.ID,
+			Title:         event.Title,
+			Date:          event.Date,
+			DurationUntil: event.DurationUntil,
+			Description:   event.Description,
+			OwnerId:       event.OwnerID,
+			NoticeBefore:  event.NoticeBefore,
+		}
+	}
+
+	return gwEvents, nil
+}
+
 func (s *grpcserver) DailyEvents(ctx context.Context, in *gw.Date) (*gw.Events, error) {
+	if in.Date == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot get daily events, %s", ErrBadRequest)
+	}
+
 	var time time.Time = time.Unix(in.Date, 0)
 
 	events, err := s.app.DailyEvents(time)
@@ -153,25 +190,14 @@ func (s *grpcserver) DailyEvents(ctx context.Context, in *gw.Date) (*gw.Events, 
 		return nil, status.Errorf(codes.Internal, "cannot get events, %s", err)
 	}
 
-	gwEvents := &gw.Events{}
-	gwEvents.Results = make([]*gw.Event, len(events))
-
-	for i, event := range events {
-		gwEvents.Results[i] = &gw.Event{
-			Id:            event.ID,
-			Title:         event.Title,
-			Date:          event.Date,
-			DurationUntil: event.DurationUntil,
-			Description:   event.Description,
-			OwnerId:       event.OwnerID,
-			NoticeBefore:  event.NoticeBefore,
-		}
-	}
-
-	return gwEvents, nil
+	return s.TimeEvents(ctx, in, events)
 }
 
 func (s *grpcserver) WeeklyEvents(ctx context.Context, in *gw.Date) (*gw.Events, error) {
+	if in.Date == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot get weekly events, %s", ErrBadRequest)
+	}
+
 	var time time.Time = time.Unix(in.Date, 0)
 
 	events, err := s.app.WeeklyEvents(time)
@@ -179,25 +205,14 @@ func (s *grpcserver) WeeklyEvents(ctx context.Context, in *gw.Date) (*gw.Events,
 		return nil, status.Errorf(codes.Internal, "cannot get events, %s", err)
 	}
 
-	gwEvents := &gw.Events{}
-	gwEvents.Results = make([]*gw.Event, len(events))
-
-	for i, event := range events {
-		gwEvents.Results[i] = &gw.Event{
-			Id:            event.ID,
-			Title:         event.Title,
-			Date:          event.Date,
-			DurationUntil: event.DurationUntil,
-			Description:   event.Description,
-			OwnerId:       event.OwnerID,
-			NoticeBefore:  event.NoticeBefore,
-		}
-	}
-
-	return gwEvents, nil
+	return s.TimeEvents(ctx, in, events)
 }
 
 func (s *grpcserver) MonthEvents(ctx context.Context, in *gw.Date) (*gw.Events, error) {
+	if in.Date == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot get month events, %s", ErrBadRequest)
+	}
+
 	var time time.Time = time.Unix(in.Date, 0)
 
 	events, err := s.app.MonthEvents(time)
@@ -205,20 +220,5 @@ func (s *grpcserver) MonthEvents(ctx context.Context, in *gw.Date) (*gw.Events, 
 		return nil, status.Errorf(codes.Internal, "cannot get events, %s", err)
 	}
 
-	gwEvents := &gw.Events{}
-	gwEvents.Results = make([]*gw.Event, len(events))
-
-	for i, event := range events {
-		gwEvents.Results[i] = &gw.Event{
-			Id:            event.ID,
-			Title:         event.Title,
-			Date:          event.Date,
-			DurationUntil: event.DurationUntil,
-			Description:   event.Description,
-			OwnerId:       event.OwnerID,
-			NoticeBefore:  event.NoticeBefore,
-		}
-	}
-
-	return gwEvents, nil
+	return s.TimeEvents(ctx, in, events)
 }

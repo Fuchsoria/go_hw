@@ -10,6 +10,7 @@ services:
   postgres:
     image: postgres
     hostname: postgres
+    container_name: postgres
     ports:
       - '5432:5432'
     expose:
@@ -27,6 +28,7 @@ services:
   rabbit:
     image: rabbitmq:3.7.17-management
     hostname: rabbit
+    container_name: rabbit
     ports:
       - '15672:15672'
       - '5672:5672'
@@ -45,6 +47,7 @@ services:
       dockerfile: ./cmd/calendar/Dockerfile
       args:
         - CONFIG_FILE_NAME=config
+    container_name: calendar
     depends_on:
       - rabbit
       - postgres
@@ -69,6 +72,7 @@ services:
       dockerfile: ./cmd/calendar_scheduler/Dockerfile
       args:
         - CONFIG_FILE_NAME=scheduler_config
+    container_name: calendar_scheduler
     depends_on:
       - calendar
       - rabbit
@@ -92,6 +96,7 @@ services:
       dockerfile: ./cmd/calendar_sender/Dockerfile
       args:
         - CONFIG_FILE_NAME=sender_config
+    container_name: calendar_sender
     depends_on:
       - calendar
       - rabbit

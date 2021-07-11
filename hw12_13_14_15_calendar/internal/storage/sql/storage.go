@@ -47,7 +47,11 @@ func (s *Storage) UpdateEvent(event storage.Event) error {
 }
 
 func (s *Storage) RemoveEvent(eventID string) error {
-	_, err := s.db.Exec("DELETE FROM events WHERE id=$1", eventID)
+	result, err := s.db.Exec("DELETE FROM events WHERE id=$1", eventID)
+
+	if count, _ := result.RowsAffected(); count == 0 {
+		return fmt.Errorf("events were not found, %w", storage.ErrNotFound)
+	}
 
 	return err
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"testing"
@@ -62,7 +63,12 @@ func panicOnErr(err error) {
 	}
 }
 
+const delay = 5 * time.Second
+
 func TestHTTP(t *testing.T) {
+	log.Printf("wait %s for table creation...", delay)
+	time.Sleep(delay)
+
 	db, err := sqlx.ConnectContext(context.Background(), "postgres", PostgresDSN)
 	if err != nil {
 		panicOnErr(err)
@@ -300,5 +306,88 @@ func TestHTTP(t *testing.T) {
 
 		require.GreaterOrEqual(t, len(body.Results), 1, "results length should be greater or equal than 1")
 		require.True(t, createdEventExist, "created item should be found by date")
+	})
+
+	t.Run("test empty body create", func(t *testing.T) {
+		resp, err := http.Post(httpUrlCreate, "application/json",
+			nil)
+		if err != nil {
+			panicOnErr(err)
+		}
+
+		require.NoError(t, err, "should be without errors")
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "response statuscode should be bad request")
+	})
+
+	t.Run("test empty body update", func(t *testing.T) {
+		resp, err := http.Post(httpUrlUpdate, "application/json",
+			nil)
+		if err != nil {
+			panicOnErr(err)
+		}
+
+		require.NoError(t, err, "should be without errors")
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode, "response statuscode should be internal server error")
+	})
+
+	t.Run("test empty body delete", func(t *testing.T) {
+		resp, err := http.Post(httpUrlCreate, "application/json",
+			nil)
+		if err != nil {
+			panicOnErr(err)
+		}
+
+		require.NoError(t, err, "should be without errors")
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "response statuscode should be bad request")
+	})
+
+	t.Run("test delete not exist id", func(t *testing.T) {
+		deleteBody := DeleteBody{ID: "removeid"}
+
+		jsonData, err := json.Marshal(deleteBody)
+		if err != nil {
+			panicOnErr(err)
+		}
+
+		resp, err := http.Post(httpUrlDelete, "application/json", bytes.NewBuffer(jsonData))
+		if err != nil {
+			panicOnErr(err)
+		}
+
+		require.NoError(t, err, "should be without errors")
+		require.Equal(t, http.StatusNotFound, resp.StatusCode, "response statuscode should be not found")
+	})
+
+	t.Run("test empty body daily", func(t *testing.T) {
+		resp, err := http.Post(httpUrlDaily, "application/json",
+			nil)
+		if err != nil {
+			panicOnErr(err)
+		}
+
+		require.NoError(t, err, "should be without errors")
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "response statuscode should be bad request")
+	})
+
+	t.Run("test empty body weekly", func(t *testing.T) {
+		resp, err := http.Post(httpUrlWeekly, "application/json",
+			nil)
+		if err != nil {
+			panicOnErr(err)
+		}
+
+		require.NoError(t, err, "should be without errors")
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "response statuscode should be bad request")
+	})
+
+	t.Run("test empty body month", func(t *testing.T) {
+		resp, err := http.Post(httpUrlMonth, "application/json",
+			nil)
+		if err != nil {
+			panicOnErr(err)
+		}
+
+		require.NoError(t, err, "should be without errors")
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "response statuscode should be bad request")
 	})
 }
