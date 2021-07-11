@@ -46,8 +46,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	defer cancel()
-
 	scheduler := scheduler.NewScheduler(logg, storage, config.Scheduler.RecheckDelaySeconds, config.AMPQ.URI, config.AMPQ.Name)
 
 	go func() {
@@ -66,7 +64,13 @@ func main() {
 
 	logg.Info("scheduler is running...")
 
-	scheduler.Start(ctx)
+	if err := scheduler.Start(ctx); err != nil {
+		logg.Error(err.Error())
+
+		log.Fatal(err)
+	}
+
+	cancel()
 }
 
 func connectStorage(ctx context.Context, config Config) (*sqlstorage.Storage, error) {

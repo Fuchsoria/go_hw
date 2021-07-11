@@ -37,7 +37,7 @@ func main() {
 
 	conn, err := amqp.Dial(config.AMPQ.URI)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("test", err)
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

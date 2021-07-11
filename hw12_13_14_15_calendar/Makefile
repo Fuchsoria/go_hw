@@ -51,4 +51,32 @@ generate-gateway: generate
 			--grpc-gateway_opt generate_unbound_methods=true \
 			proto/EventService/*.proto
 
+up:
+	docker-compose up -d
+
+upl:
+	docker-compose up
+
+down:
+	docker-compose down
+
+rebuild:
+	docker-compose up --build
+
+integration-tests-cleanup:
+	docker-compose -f docker-compose.test.yaml down \
+    --rmi local \
+		--volumes \
+		--remove-orphans \
+		--timeout 60; \
+  	docker-compose rm -f
+
+integration-tests:
+	set -e ;\
+	docker-compose -f docker-compose.test.yaml up --build -d ;\
+	test_status_code=0 ;\
+	docker-compose -f docker-compose.test.yaml run integration_tests go test -v || test_status_code=$$? ;\
+	docker-compose -f docker-compose.test.yaml down ;\
+	exit $$test_status_code ;
+
 .PHONY: build run build-img run-img version test lint
