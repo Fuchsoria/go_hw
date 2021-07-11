@@ -62,7 +62,7 @@ func panicOnErr(err error) {
 	}
 }
 
-func TestHTTPCreate(t *testing.T) {
+func TestHTTP(t *testing.T) {
 	db, err := sqlx.ConnectContext(context.Background(), "postgres", PostgresDSN)
 	if err != nil {
 		panicOnErr(err)
