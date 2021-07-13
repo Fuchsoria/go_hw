@@ -2,7 +2,7 @@
   "logger": { "level": "debug", "file": "./logs/logs.log" },
   "db": {
     "method": "sql",
-    "connection_string": "host=postgres port=5432 user=postgres password=example dbname=calendar sslmode=disable"
+    "connection_string": "host=postgres port=5432 user=postgres password=example dbname=postgres sslmode=disable"
   },
   "http": { "host": "0.0.0.0", "port": 5555, "grpc_port": 7777 }
 }

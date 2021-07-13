@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,21 +30,20 @@ func main() {
 		return
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	config, err := NewConfig()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	logg := logger.New(config.Logger.Level, config.Logger.File)
+
+	ctx, cancel := context.WithCancel(context.Background())
 
 	storage, err := connectStorage(ctx, config)
 	if err != nil {
 		logg.Error(err.Error())
 
-		panic(err)
+		log.Fatal(err)
 	}
 
 	scheduler := scheduler.NewScheduler(logg, storage, config.Scheduler.RecheckDelaySeconds, config.AMPQ.URI, config.AMPQ.Name)
@@ -64,7 +64,13 @@ func main() {
 
 	logg.Info("scheduler is running...")
 
-	scheduler.Start(ctx)
+	if err := scheduler.Start(ctx); err != nil {
+		logg.Error(err.Error())
+
+		log.Fatal(err)
+	}
+
+	cancel()
 }
 
 func connectStorage(ctx context.Context, config Config) (*sqlstorage.Storage, error) {

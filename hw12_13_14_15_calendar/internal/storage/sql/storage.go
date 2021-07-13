@@ -2,6 +2,7 @@ package sqlstorage
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -47,7 +48,15 @@ func (s *Storage) UpdateEvent(event storage.Event) error {
 }
 
 func (s *Storage) RemoveEvent(eventID string) error {
-	_, err := s.db.Exec("DELETE FROM events WHERE id=$1", eventID)
+	result, err := s.db.Exec("DELETE FROM events WHERE id=$1", eventID)
+
+	if count, err := result.RowsAffected(); count == 0 {
+		if err != nil {
+			return fmt.Errorf("cannot get rows, %w", sql.ErrNoRows)
+		}
+
+		return fmt.Errorf("events were not found, %w", storage.ErrNotFound)
+	}
 
 	return err
 }

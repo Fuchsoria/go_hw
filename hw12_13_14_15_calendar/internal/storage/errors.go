@@ -8,4 +8,5 @@ var (
 	ErrCantUpdateEvent      = errors.New("cannot update event")
 	ErrCantRemoveEvent      = errors.New("cannot remove event")
 	ErrCantConnectToStorage = errors.New("cannot connect to storage")
+	ErrNotFound             = errors.New("not found")
 )

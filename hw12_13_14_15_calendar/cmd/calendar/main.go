@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -41,7 +42,7 @@ func main() {
 
 	config, err := NewConfig()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	logg := logger.New(config.Logger.Level, config.Logger.File)
@@ -50,7 +51,7 @@ func main() {
 	if err != nil {
 		logg.Error(err.Error())
 
-		panic(err)
+		log.Fatal(err)
 	}
 
 	calendar := app.New(logg, storage)
